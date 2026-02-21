@@ -1,25 +1,33 @@
+"""
+Lead model for CRM pipeline.
+"""
 import enum
 from datetime import datetime, UTC
 
 from sqlalchemy import String, Float, Integer, DateTime, Enum as SAEnum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.base import Base
+from app.models.note import LeadNote
+from app.models.user import User
 
 
 class LeadSource(str, enum.Enum):
+    """Lead source types."""
     SCANNER = "scanner"
     PARTNER = "partner"
     MANUAL = "manual"
 
 
 class BusinessDomain(str, enum.Enum):
+    """Business domain categories."""
     FIRST = "first"
     SECOND = "second"
     THIRD = "third"
 
 
 class ColdStage(str, enum.Enum):
+    """Cold lead stages."""
     NEW = "new"
     CONTACTED = "contacted"
     QUALIFIED = "qualified"
@@ -41,6 +49,7 @@ TERMINAL_COLD_STAGES = {ColdStage.TRANSFERRED, ColdStage.LOST}
 
 
 class Lead(Base):
+    """Lead model - represents a potential customer."""
     __tablename__ = "leads"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -54,6 +63,9 @@ class Lead(Base):
         SAEnum(BusinessDomain), nullable=True
     )
 
+    # Assignment
+    assigned_to_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    
     # Activity metrics
     message_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
@@ -74,3 +86,10 @@ class Lead(Base):
 
     # Relationships
     sale: Mapped["Sale | None"] = relationship("Sale", back_populates="lead", uselist=False)
+    assigned_to: Mapped["User | None"] = relationship("User", back_populates="assigned_leads")
+    notes: Mapped[list["LeadNote"]] = relationship(
+        "LeadNote", 
+        back_populates="lead", 
+        cascade="all, delete-orphan",
+        order_by="LeadNote.created_at.desc()"
+    )

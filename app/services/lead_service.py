@@ -8,7 +8,7 @@ Rules enforced here (NOT in AI, NOT in API layer):
 """
 from datetime import datetime, UTC
 
-from app.models.lead import Lead, ColdStage, COLD_STAGE_ORDER, TERMINAL_COLD_STAGES, LeadSource, BusinessDomain
+from app.models.lead import Lead, ColdStage, COLD_STAGE_ORDER, TERMINAL_COLD_STAGES
 from app.repositories.lead_repo import LeadRepository
 from app.schemas.lead import LeadCreate, AIAnalysisResult
 
@@ -19,6 +19,7 @@ class LeadStageError(Exception):
 
 
 class LeadNotFoundError(Exception):
+    """Raised when lead is not found."""
     pass
 
 
