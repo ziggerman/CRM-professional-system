@@ -4,7 +4,9 @@ Pydantic schemas for Lead Notes API.
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from app.core.sanitization import sanitize_long
 
 
 class NoteCreate(BaseModel):
@@ -13,6 +15,11 @@ class NoteCreate(BaseModel):
     note_type: str = Field(default="comment", pattern="^(comment|system|ai)$")
     author_id: Optional[str] = Field(None, max_length=64)
     author_name: Optional[str] = Field(None, max_length=128)
+
+    @field_validator("content", mode="before")
+    @classmethod
+    def sanitize_content(cls, v: str) -> str:
+        return sanitize_long(v) or ""
 
 
 class NoteUpdate(BaseModel):

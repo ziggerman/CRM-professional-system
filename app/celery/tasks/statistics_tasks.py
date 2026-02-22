@@ -19,13 +19,13 @@ logger = logging.getLogger(__name__)
 def generate_daily_statistics_task() -> dict:
     """
     Generate daily statistics for leads and sales.
-    
-    Runs daily at 8 AM UTC (configured in celery config).
     Calculates:
     - Total leads by stage
     - Total sales by stage
     - Conversion rate
     - Average AI score
+    - NEW: Data Capture Depth (Phone, Email, Name)
+    - NEW: Intent Distribution
     """
     import asyncio
     
@@ -34,29 +34,39 @@ def generate_daily_statistics_task() -> dict:
             lead_repo = LeadRepository(session)
             sale_repo = SaleRepository(session)
             
-            # Get counts by stage
+            all_leads, _ = await lead_repo.get_all(limit=50000)
+            all_sales, _ = await sale_repo.get_all(limit=50000)
+            
+            total_leads = len(all_leads)
+            
+            # Counts by stage
             leads_by_stage = {}
-            for stage in ColdStage:
-                leads, _ = await lead_repo.get_all(stage=stage, limit=10000)
-                leads_by_stage[stage.value] = len(leads)
+            for l in all_leads:
+                s = l.stage.value
+                leads_by_stage[s] = leads_by_stage.get(s, 0) + 1
             
             sales_by_stage = {}
-            for stage in SaleStage:
-                sales, _ = await sale_repo.get_all(stage=stage, limit=10000)
-                sales_by_stage[stage.value] = len(sales)
+            for s in all_sales:
+                st = s.stage.value
+                sales_by_stage[st] = sales_by_stage.get(st, 0) + 1
             
-            # Calculate conversion rate
-            total_leads = sum(leads_by_stage.values())
-            transferred = leads_by_stage.get(ColdStage.TRANSFERRED.value, 0)
-            conversion_rate = (transferred / total_leads * 100) if total_leads > 0 else 0
+            # Depth metrics
+            has_phone = len([l for l in all_leads if l.phone])
+            has_email = len([l for l in all_leads if l.email])
+            has_name = len([l for l in all_leads if l.full_name])
             
-            # Get leads with AI scores
-            all_leads, _ = await lead_repo.get_all(limit=10000)
+            # B2B depth
+            has_b2b = len([l for l in all_leads if l.company or l.budget])
+            
+            # Intent metrics
+            intent_dist = {}
+            for l in all_leads:
+                if l.intent:
+                    intent_dist[l.intent] = intent_dist.get(l.intent, 0) + 1
+            
+            # AI score
             scored_leads = [l for l in all_leads if l.ai_score is not None]
-            avg_ai_score = (
-                sum(l.ai_score for l in scored_leads) / len(scored_leads)
-                if scored_leads else 0
-            )
+            avg_ai_score = sum(l.ai_score for l in scored_leads) / len(scored_leads) if scored_leads else 0
             
             stats = {
                 "generated_at": datetime.now(UTC).isoformat(),
@@ -65,25 +75,73 @@ def generate_daily_statistics_task() -> dict:
                     "by_stage": leads_by_stage,
                 },
                 "sales": {
-                    "total": sum(sales_by_stage.values()),
+                    "total": len(all_sales),
                     "by_stage": sales_by_stage,
                 },
+                "depth_metrics": {
+                    "name_capture": round(has_name / total_leads * 100, 1) if total_leads > 0 else 0,
+                    "phone_capture": round(has_phone / total_leads * 100, 1) if total_leads > 0 else 0,
+                    "email_capture": round(has_email / total_leads * 100, 1) if total_leads > 0 else 0,
+                    "b2b_coverage": round(has_b2b / total_leads * 100, 1) if total_leads > 0 else 0,
+                },
+                "intent_metrics": intent_dist,
                 "metrics": {
-                    "conversion_rate": round(conversion_rate, 2),
+                    "conversion_rate": round((leads_by_stage.get(ColdStage.TRANSFERRED.value, 0) / total_leads * 100), 2) if total_leads > 0 else 0,
                     "avg_ai_score": round(avg_ai_score, 2),
-                    "analyzed_leads": len(scored_leads),
                 },
             }
             
-            logger.info(f"Daily statistics generated: {stats}")
-            
-            # Here you could:
-            # - Save to database
-            # - Send to Telegram
-            # - Push to analytics service
-            
+            logger.info(f"Advanced daily statistics generated.")
             return stats
     
+    return asyncio.run(_generate())
+
+
+@celery_app.task
+def generate_advanced_report_task() -> dict:
+    """
+    Generate an advanced analytical report for admin view.
+    Includes Intent distribution and B2B coverage.
+    """
+    import asyncio
+    
+    async def _generate():
+        async with AsyncSessionLocal() as session:
+            lead_repo = LeadRepository(session)
+            all_leads, _ = await lead_repo.get_all(limit=50000)
+            
+            total = len(all_leads)
+            if total == 0:
+                return {"total": 0, "error": "No leads found"}
+            
+            # Intents
+            intents = {}
+            for l in all_leads:
+                if l.intent:
+                    intents[l.intent] = intents.get(l.intent, 0) + 1
+            
+            # B2B Depth
+            has_company = len([l for l in all_leads if l.company])
+            has_budget = len([l for l in all_leads if l.budget])
+            has_pain = len([l for l in all_leads if l.pain_points])
+            
+            # Contacts
+            has_email = len([l for l in all_leads if l.email])
+            has_phone = len([l for l in all_leads if l.phone])
+            
+            return {
+                "generated_at": datetime.now(UTC).isoformat(),
+                "total_leads": total,
+                "intents": intents,
+                "coverage": {
+                    "email": round(has_email / total * 100, 1),
+                    "phone": round(has_phone / total * 100, 1),
+                    "b2b_company": round(has_company / total * 100, 1),
+                    "b2b_budget": round(has_budget / total * 100, 1),
+                    "b2b_pain": round(has_pain / total * 100, 1),
+                }
+            }
+            
     return asyncio.run(_generate())
 
 

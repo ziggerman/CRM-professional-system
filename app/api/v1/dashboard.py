@@ -6,9 +6,17 @@ from pydantic import BaseModel
 
 from app.core.deps import get_automation_service
 from app.services.automation_service import AutomationService
+from app.core.config import settings
+import json
+import redis.asyncio as redis
 
+from app.core.security import verify_api_token, require_role
 
-router = APIRouter(prefix="/api/v1/dashboard", tags=["dashboard"])
+router = APIRouter(
+    prefix="/api/v1/dashboard", 
+    tags=["dashboard"],
+    dependencies=[Depends(require_role("admin"))]
+)
 
 
 class LeadStats(BaseModel):
@@ -42,7 +50,18 @@ class DashboardStats(BaseModel):
 
 @router.get("", response_model=DashboardStats)
 async def get_dashboard():
-    """Get complete dashboard statistics."""
+    """Get complete dashboard statistics with Redis caching (Step 5.2)."""
+    cache_key = "dashboard_stats_main"
+    r = redis.from_url(settings.REDIS_URL, decode_responses=True)
+    
+    # Try cache
+    try:
+        cached = await r.get(cache_key)
+        if cached:
+            return DashboardStats(**json.loads(cached))
+    except Exception:
+        pass
+
     from app.repositories.lead_repo import LeadRepository
     from app.repositories.sale_repo import SaleRepository
     from app.core.database import AsyncSessionLocal
@@ -51,7 +70,7 @@ async def get_dashboard():
         lead_repo = LeadRepository(session)
         sale_repo = SaleRepository(session)
         
-        # Get all leads and sales
+        # Get all leads and sales (expensive)
         leads, _ = await lead_repo.get_all()
         sales, _ = await sale_repo.get_all()
         
@@ -85,13 +104,23 @@ async def get_dashboard():
         total_revenue = sum(s.amount or 0 for s in paid_sales)
         avg_deal = total_revenue / len(paid_sales) if paid_sales else None
         
-        return DashboardStats(
+        result = DashboardStats(
             leads=LeadStats(**lead_counts),
             sales=SalesStats(**sales_counts),
             conversion_rate=round(conversion_rate, 2),
             avg_deal_amount=avg_deal,
             total_revenue=total_revenue,
         )
+
+        # Update cache (5 mins)
+        try:
+            await r.setex(cache_key, 300, result.model_dump_json())
+        except Exception:
+            pass
+        finally:
+            await r.close()
+            
+        return result
 
 
 @router.get("/leads-by-stage")
@@ -192,19 +221,28 @@ async def get_revenue_by_month():
     """Get revenue grouped by month."""
     from app.repositories.sale_repo import SaleRepository
     from app.core.database import AsyncSessionLocal
-    
+
     async with AsyncSessionLocal() as session:
         sale_repo = SaleRepository(session)
-        sales = await sale_repo.get_all()
-        
+        sales, _ = await sale_repo.get_all(limit=10000)  # unpack tuple
+
         # Group by month
         monthly = {}
         for sale in sales:
             if sale.stage.value == "paid" and sale.amount:
-                month = sale.updated_at.strftime("%Y-%m")
+                month = sale.created_at.strftime("%Y-%m")
                 monthly[month] = monthly.get(month, 0) + sale.amount
-        
+
+        # Sort months chronologically
+        sorted_months = sorted(monthly.items())
         return {
-            "labels": list(monthly.keys()),
-            "values": list(monthly.values()),
+            "labels": [m for m, _ in sorted_months],
+            "values": [v for _, v in sorted_months],
         }
+@router.get("/advanced")
+async def get_advanced_dashboard():
+    """Get advanced analytical report."""
+    from app.celery.tasks.statistics_tasks import generate_advanced_report_task
+    # We call the function logic directly for the API to ensure immediate response
+    # or we could run it as a task, but for a bot's immediate view, direct is better.
+    return generate_advanced_report_task()

@@ -24,7 +24,10 @@ from openai import AsyncOpenAI
 from app.core.config import settings
 from app.schemas.lead import AIAnalysisResult
 from app.ai.prompts import LEAD_ANALYSIS_SYSTEM_PROMPT, build_lead_analysis_prompt
+from app.ai.fallback_scorer import rule_based_score
 from app.models.lead import Lead
+from app.models.ai_log import AIAnalysisLog
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -109,36 +112,63 @@ class AIService:
 
     def _build_features(self, lead: Lead) -> dict:
         """
-        Extract only the features we expose to AI.
-        Explicit about what AI sees — no leaking of internal IDs or raw DB state.
+        Extract features for AI. Includes engineered signals:
+        - message_velocity: messages/day (recency-weighted activity)
+        - contact_completeness: both email and phone
+        - b2b_qualification: company + position present
         """
-        # Handle timezone-aware/naive datetime
         created = lead.created_at
         if created.tzinfo is None:
             created = created.replace(tzinfo=timezone.utc)
-        days_since_created = (datetime.now(timezone.utc) - created).days
-        
+        days_since_created = max((datetime.now(timezone.utc) - created).days, 1)
+
+        # Engineered features
+        message_velocity = round((lead.message_count or 0) / days_since_created, 3)
+        contact_completeness = bool(lead.email and lead.phone)
+        b2b_qualification = bool(getattr(lead, "company", None) and getattr(lead, "position", None))
+
         return {
             "source": lead.source.value,
             "stage": lead.stage.value,
             "message_count": lead.message_count,
+            "message_velocity": message_velocity,
             "has_business_domain": lead.business_domain is not None,
             "business_domain": lead.business_domain.value if lead.business_domain else None,
             "days_since_created": days_since_created,
+            "contact_completeness": contact_completeness,
+            "b2b_qualification": b2b_qualification,
+            "intent": lead.intent,
+            "budget": lead.budget,
+            "pain_points": lead.pain_points,
         }
 
-    async def analyze_lead(self, lead: Lead) -> AIAnalysisResult:
+    async def warm_up(self) -> bool:
+        """
+        Perform a dummy request to warm up the model/network (Step 5.3).
+        """
+        try:
+            # Simple dummy completion to warm up the provider and connection
+            await self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": "ping"}],
+                max_tokens=1
+            )
+            logger.info(f"AI Model {self.model} warmed up successfully.")
+            return True
+        except Exception as e:
+            logger.warning(f"AI Model warming failed: {e}")
+            return False
+
+    async def analyze_lead(self, lead: Lead, db: Optional[AsyncSession] = None) -> AIAnalysisResult:
         """
         Call LLM and return structured analysis.
-        Uses Redis caching to avoid redundant API calls.
-        Raises AIServiceError on failure so caller can handle gracefully.
+        Uses Redis caching. Falls back to rule_based_score when OpenAI is down.
+        Logs decision to AIAnalysisLog if db session is provided (Step 4.3).
         """
-        # Check cache first
         cached_result = await self._get_cached_result(lead)
         if cached_result:
             return cached_result
-        
-        # Cache miss - call AI
+
         features = self._build_features(lead)
         prompt = build_lead_analysis_prompt(features)
 
@@ -149,27 +179,49 @@ class AIService:
                     {"role": "system", "content": LEAD_ANALYSIS_SYSTEM_PROMPT},
                     {"role": "user", "content": prompt},
                 ],
-                temperature=0.1,  # Low temp for consistent scoring
-                max_tokens=256,
+                temperature=0.1,
+                max_tokens=300,
                 response_format={"type": "json_object"},
             )
-        except Exception as e:
-            logger.error(f"OpenAI API error for lead {lead.id}: {e}")
-            raise AIServiceError(f"AI service unavailable: {e}") from e
 
-        raw = response.choices[0].message.content
-        try:
+            raw = response.choices[0].message.content
             data = json.loads(raw)
             result = AIAnalysisResult(
                 score=float(data["score"]),
                 recommendation=str(data["recommendation"]),
                 reason=str(data["reason"]),
             )
-            
-            # Cache the result
             await self._set_cached_result(lead, result)
+
+            # Log to DB for auditing (Step 4.3)
+            if db:
+                try:
+                    usage = response.usage
+                    log_entry = AIAnalysisLog(
+                        lead_id=lead.id,
+                        score=result.score,
+                        recommendation=result.recommendation,
+                        reason=result.reason,
+                        features=features,
+                        prompt_tokens=usage.prompt_tokens if usage else None,
+                        completion_tokens=usage.completion_tokens if usage else None,
+                        model=self.model,
+                    )
+                    db.add(log_entry)
+                    await db.flush()
+                except Exception as log_err:
+                    logger.warning(f"Failed to log AI analysis to DB: {log_err}")
             
             return result
-        except (KeyError, ValueError, json.JSONDecodeError) as e:
-            logger.error(f"AI response parse error: {raw!r} — {e}")
-            raise AIServiceError(f"Invalid AI response format: {e}") from e
+
+        except Exception as e:
+            # Step 4.2: Graceful degradation — rule-based fallback when AI is down
+            logger.warning(
+                f"OpenAI unavailable for lead {lead.id}, using rule-based fallback: {e}"
+            )
+            fb = rule_based_score(lead)
+            return AIAnalysisResult(
+                score=fb["score"],
+                recommendation=fb["recommendation"],
+                reason=fb["reason"],
+            )

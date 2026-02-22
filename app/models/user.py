@@ -16,9 +16,10 @@ if TYPE_CHECKING:
 
 class UserRole(str, enum.Enum):
     """User roles."""
-    ADMIN = "admin"
-    MANAGER = "manager"
-    VIEWER = "viewer"
+    SUPER_ADMIN = "SUPER_ADMIN"
+    ADMIN = "ADMIN"
+    MANAGER = "MANAGER"
+    AGENT = "AGENT"
 
 
 class User(Base):
@@ -31,6 +32,8 @@ class User(Base):
     telegram_id: Optional[str] = mapped_column(String(64), unique=True, nullable=True, index=True)
     username: Optional[str] = mapped_column(String(128), nullable=True)
     full_name: str = mapped_column(String(256), nullable=False)
+    email: Mapped[str | None] = mapped_column(String(128), unique=True, nullable=True, index=True)
+    hashed_password: Mapped[str | None] = mapped_column(String(128), nullable=True)
     role: str = mapped_column(SAEnum(UserRole), default=UserRole.MANAGER)
     is_active: bool = mapped_column(Boolean, default=True)
     

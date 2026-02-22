@@ -14,6 +14,9 @@ from alembic import context
 from app.core.base import Base
 from app.models.lead import Lead
 from app.models.sale import Sale
+from app.models.history import LeadHistory, SaleHistory
+from app.models.attachment import LeadAttachment
+from app.models.note import LeadNote
 from app.core.config import settings
 
 # this is the Alembic Config object
@@ -46,7 +49,11 @@ def run_migrations_offline() -> None:
 
 def do_run_migrations(connection: Connection) -> None:
     """Run migrations with connection."""
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection, 
+        target_metadata=target_metadata,
+        render_as_batch=True
+    )
 
     with context.begin_transaction():
         context.run_migrations()

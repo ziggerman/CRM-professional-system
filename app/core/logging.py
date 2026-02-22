@@ -1,86 +1,84 @@
 """
-Structured logging configuration.
+Structured logging setup with fallback to standard library.
+Step 2.1 — Observability
 """
 import logging
 import sys
 from typing import Any
 
+try:
+    import structlog
+    HAS_STRUCTLOG = True
+except ImportError:
+    HAS_STRUCTLOG = False
+
 from app.core.config import settings
 
 
 def setup_logging() -> None:
-    """Configure structured logging for the application."""
-    
-    # Create formatters
-    class StructuredFormatter(logging.Formatter):
-        """JSON-like structured formatter for production."""
+    """Configure logging. Uses structlog if available, otherwise standard logging."""
+    if HAS_STRUCTLOG:
+        shared_processors = [
+            structlog.stdlib.add_log_level,
+            structlog.stdlib.add_logger_name,
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+        ]
+
+        if settings.DEBUG:
+            renderer = structlog.dev.ConsoleRenderer()
+        else:
+            renderer = structlog.processors.JSONRenderer()
+
+        structlog.configure(
+            processors=shared_processors + [
+                structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+            ],
+            logger_factory=structlog.stdlib.LoggerFactory(),
+            cache_logger_on_first_use=True,
+            wrapper_class=structlog.stdlib.BoundLogger,
+        )
+
+        handler = logging.StreamHandler(sys.stdout)
+        formatter = structlog.stdlib.ProcessorFormatter(
+            foreign_pre_chain=shared_processors,
+            processors=[
+                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+                renderer,
+            ],
+        )
+        handler.setFormatter(formatter)
         
-        def format(self, record: logging.LogRecord) -> str:
-            log_data = {
-                "timestamp": self.formatTime(record),
-                "level": record.levelname,
-                "logger": record.name,
-                "message": record.getMessage(),
-            }
-            
-            # Add extra fields
-            if hasattr(record, "extra"):
-                log_data.update(record.extra)
-            
-            # Add exception info
-            if record.exc_info:
-                log_data["exception"] = self.formatException(record.exc_info)
-            
-            # Add request info if available
-            if hasattr(record, "request_id"):
-                log_data["request_id"] = record.request_id
-            
-            if hasattr(record, "user_id"):
-                log_data["user_id"] = record.user_id
-            
-            return str(log_data)
-    
-    # Console formatter (human-readable)
-    console_formatter = logging.Formatter(
-        fmt="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
-    
-    # Configure root logger
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG if settings.DEBUG else logging.INFO)
-    
-    # Remove existing handlers
-    for handler in root_logger.handlers[:]:
-        root_logger.removeHandler(handler)
-    
-    # Console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(console_formatter)
-    root_logger.addHandler(console_handler)
-    
-    # Set third-party loggers to WARNING
+        root_logger = logging.getLogger()
+        root_logger.addHandler(handler)
+        root_logger.setLevel(logging.DEBUG if settings.DEBUG else logging.INFO)
+    else:
+        # Fallback to standard logging
+        logging.basicConfig(
+            level=logging.DEBUG if settings.DEBUG else logging.INFO,
+            format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            stream=sys.stdout
+        )
+        logging.info("Structlog not found, falling back to standard logging.")
+
+    # Set third-party loggers
     logging.getLogger("uvicorn").setLevel(logging.WARNING)
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
-    logging.getLogger("aiogram").setLevel(logging.INFO)
 
 
-def get_logger(name: str) -> logging.Logger:
+def get_logger(name: str):
     """Get a logger instance."""
+    if HAS_STRUCTLOG:
+        return structlog.get_logger(name)
     return logging.getLogger(name)
 
 
 class LogContext:
-    """Context manager for adding extra fields to log records."""
-    
+    """Compatibility context manager."""
     def __init__(self, **kwargs: Any):
         self.extra = kwargs
-        self._old_factory = None
-    
-    def __enter__(self) -> "LogContext":
-        # This is a simplified version - in production you'd use
-        # contextvars for thread-safe context
+    def __enter__(self):
         return self
-    
-    def __exit__(self, *args: Any) -> None:
+    def __exit__(self, *args: Any):
         pass

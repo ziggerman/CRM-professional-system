@@ -9,10 +9,12 @@ from sqlalchemy.orm import sessionmaker
 from app.core.base import Base
 from app.core.config import settings
 
-# Import models to register them with Base.metadata
 from app.models.lead import Lead
 from app.models.sale import Sale
 from app.models.note import LeadNote
+from app.models.history import LeadHistory, SaleHistory
+from app.models.attachment import LeadAttachment
+from app.models.ai_log import AIAnalysisLog
 
 # Create async engine
 # SQLite doesn't support pool_size/max_overflow, so we conditionally add them

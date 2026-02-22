@@ -9,6 +9,7 @@ from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from jose import jwt
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -55,11 +56,23 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     
     def _get_client_ip(self, request: Request) -> str:
         """Get client IP address."""
-        # Check for forwarded header
         forwarded = request.headers.get("X-Forwarded-For")
         if forwarded:
             return forwarded.split(",")[0].strip()
         return request.client.host if request.client else "unknown"
+    
+    def _get_user_id(self, request: Request) -> Optional[str]:
+        """Try to get user ID from JWT token."""
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return None
+        
+        token = auth_header.split(" ")[1]
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            return str(payload.get("sub"))
+        except:
+            return None
     
     def _get_limit(self, path: str) -> tuple[int, int]:
         """Get rate limit for endpoint."""
@@ -82,10 +95,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         
         client_ip = self._get_client_ip(request)
+        user_id = self._get_user_id(request)
         requests_limit, window = self._get_limit(request.url.path)
         
-        # Create rate limit key
-        key = f"rate_limit:{client_ip}:{request.url.path}"
+        # Create rate limit key: user-based preferred, fallback to IP
+        if user_id:
+            key = f"rate_limit:user:{user_id}:{request.url.path}"
+        else:
+            key = f"rate_limit:ip:{client_ip}:{request.url.path}"
         
         try:
             # Get current count

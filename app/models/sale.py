@@ -12,11 +12,11 @@ from app.core.base import Base
 
 class SaleStage(str, enum.Enum):
     """Sales pipeline stages."""
-    NEW = "new"
-    KYC = "kyc"
-    AGREEMENT = "agreement"
-    PAID = "paid"
-    LOST = "lost"
+    NEW = "NEW"
+    KYC = "KYC"
+    AGREEMENT = "AGREEMENT"
+    PAID = "PAID"
+    LOST = "LOST"
 
 
 # Ordered sequence for validation — cannot skip steps
@@ -68,3 +68,10 @@ class Sale(Base):
     
     # Relationship to lead
     lead: Mapped["Lead"] = relationship("Lead", back_populates="sale")
+    
+    history: Mapped[list["SaleHistory"]] = relationship(
+        "SaleHistory",
+        back_populates="sale",
+        cascade="all, delete-orphan",
+        order_by="SaleHistory.created_at.desc()"
+    )

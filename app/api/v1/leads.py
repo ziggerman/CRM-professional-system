@@ -1,26 +1,41 @@
 """
 Lead API endpoints.
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
+from pydantic import BaseModel, Field
+from typing import List, Optional
 from starlette import status
+import os
+import aiofiles
+from datetime import datetime, UTC
+from pathlib import Path
 
-from app.core.deps import get_lead_service, get_transfer_service
+
+from app.core.deps import get_lead_service, get_transfer_service, get_history_repo
+from app.repositories.history_repo import HistoryRepository
+from app.services.lead_service import LeadService, LeadNotFoundError, LeadStageError, DuplicateLeadError
+from app.services.transfer_service import TransferService, TransferError
+from app.ai.ai_service import AIServiceError
 from app.models.lead import ColdStage
+from app.models.user import UserRole
 from app.schemas.lead import (
     LeadCreate,
     LeadResponse,
     LeadListResponse,
     LeadStageUpdate,
+    LeadUpdate,
     LeadMessageUpdate,
     AIAnalysisResult,
+    LeadHistoryResponse,
+    LeadAttachmentResponse,
 )
 from app.schemas.note import NoteCreate, NoteResponse, NoteListResponse
 from app.schemas.sale import SaleResponse
-from app.services.lead_service import LeadService, LeadNotFoundError, LeadStageError
-from app.services.transfer_service import TransferService, TransferError
-from app.ai.ai_service import AIServiceError
+from app.core.security import get_current_user, require_role
+from app.models.user import User
 
-router = APIRouter()
+
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 def _not_found(lead_id: int):
@@ -41,8 +56,17 @@ async def create_lead(
     svc: LeadService = Depends(get_lead_service),
 ):
     """Create a new lead. Source is required; business_domain is optional."""
-    lead = await svc.create_lead(data)
-    return lead
+    try:
+        lead = await svc.create_lead(data)
+        return lead
+    except DuplicateLeadError as e:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": f"A lead with this {e.field} already exists.",
+                "existing_lead_id": e.existing_id,
+            },
+        )
 
 
 @router.get("", response_model=LeadListResponse)
@@ -59,13 +83,13 @@ async def list_leads(
     """List leads with pagination and filters."""
     offset = (page - 1) * page_size
     items, total = await svc.get_leads(
-        stage=stage, 
+        stage=stage,
         source=source,
         business_domain=business_domain,
         assigned_to_id=assigned_to_id,
         telegram_id=telegram_id,
-        offset=offset, 
-        limit=page_size
+        offset=offset,
+        limit=page_size,
     )
     
     total_pages = (total + page_size - 1) // page_size
@@ -80,6 +104,39 @@ async def list_leads(
     }
 
 
+class BulkActionRequest(BaseModel):
+    """Schema for bulk actions on leads."""
+    lead_ids: list[int] = Field(..., min_length=1, max_length=100)
+    action: str = Field(..., pattern="^(update_stage|delete)$")
+    stage: Optional[ColdStage] = None
+
+
+@router.post("/bulk")
+async def bulk_leads_action(
+    request: BulkActionRequest,
+    svc: LeadService = Depends(get_lead_service),
+    role: str = Depends(require_role(UserRole.ADMIN))
+):
+    """
+    Perform bulk actions on multiple leads.
+    Step 6.2 — Business Logic
+    """
+    if request.action == "update_stage":
+        if not request.stage:
+            raise HTTPException(status_code=400, detail="Stage is required for update_stage action")
+        
+        count = await svc.repo.bulk_update_stage(request.lead_ids, request.stage)
+        await svc.repo.db.commit()
+        return {"message": f"Successfully updated {count} leads", "affected": count}
+    
+    elif request.action == "delete":
+        count = await svc.repo.bulk_delete(request.lead_ids)
+        await svc.repo.db.commit()
+        return {"message": f"Successfully deleted {count} leads", "affected": count}
+    
+    return {"message": "Invalid action"}
+
+
 @router.get("/{lead_id}", response_model=LeadResponse)
 async def get_lead(
     lead_id: int,
@@ -87,6 +144,49 @@ async def get_lead(
 ):
     try:
         return await svc.get_lead(lead_id)
+    except LeadNotFoundError:
+        _not_found(lead_id)
+
+
+@router.patch("/{lead_id}", response_model=LeadResponse)
+async def update_lead(
+    lead_id: int,
+    data: LeadUpdate,
+    svc: LeadService = Depends(get_lead_service),
+):
+    """Update lead details."""
+    try:
+        lead = await svc.get_lead(lead_id)
+        return await svc.update_lead(lead, data)
+    except LeadNotFoundError:
+        _not_found(lead_id)
+
+
+@router.delete("/{lead_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_lead(
+    lead_id: int,
+    svc: LeadService = Depends(get_lead_service),
+    _ = Depends(require_role("admin"))
+):
+    """Delete a lead completely."""
+    try:
+        lead = await svc.get_lead(lead_id)
+        await svc.repo.delete(lead)
+    except LeadNotFoundError:
+        _not_found(lead_id)
+
+
+@router.get("/{lead_id}/history", response_model=list[LeadHistoryResponse])
+async def get_lead_history(
+    lead_id: int,
+    history_repo: HistoryRepository = Depends(get_history_repo),
+    svc: LeadService = Depends(get_lead_service),
+):
+    """Get the audit log of stage transitions for a specific lead."""
+    try:
+        # Check if lead exists first
+        await svc.get_lead(lead_id)
+        return await history_repo.get_by_lead_id(lead_id)
     except LeadNotFoundError:
         _not_found(lead_id)
 
@@ -218,19 +318,33 @@ async def list_lead_notes(
     page_size: int = Query(default=50, ge=1, le=200),
     svc: LeadService = Depends(get_lead_service),
 ):
-    """Get all notes for a lead."""
-    lead = await svc.get_lead(lead_id)
-    
-    notes = lead.notes
-    total = len(notes)
-    
-    # Manual pagination
-    start = (page - 1) * page_size
-    end = start + page_size
-    page_notes = notes[start:end]
-    
+    """Get all notes for a lead — SQL-level pagination, never loads all notes into RAM."""
+    from sqlalchemy import select, func
+    from app.models.note import LeadNote
+
+    # Verify lead exists
+    await svc.get_lead(lead_id)
+    session = svc.repo.db
+
+    # Count total
+    count_result = await session.execute(
+        select(func.count()).select_from(LeadNote).where(LeadNote.lead_id == lead_id)
+    )
+    total = count_result.scalar() or 0
+
+    # Paginated fetch
+    offset = (page - 1) * page_size
+    items_result = await session.execute(
+        select(LeadNote)
+        .where(LeadNote.lead_id == lead_id)
+        .order_by(LeadNote.created_at.desc())
+        .limit(page_size)
+        .offset(offset)
+    )
+    page_notes = list(items_result.scalars().all())
+
     total_pages = (total + page_size - 1) // page_size if total > 0 else 1
-    
+
     return {
         "items": page_notes,
         "total": total,
@@ -248,7 +362,6 @@ async def create_lead_note(
     svc: LeadService = Depends(get_lead_service),
 ):
     """Add a note to a lead."""
-    from datetime import datetime, UTC
     from app.models.note import LeadNote
     
     lead = await svc.get_lead(lead_id)
@@ -261,12 +374,11 @@ async def create_lead_note(
         author_name=data.author_name,
     )
     
-    # Save note
-    from app.core.database import AsyncSessionLocal
-    async with AsyncSessionLocal() as session:
-        session.add(note)
-        await session.commit()
-        await session.refresh(note)
+    # Save note using existing DI session
+    session = svc.repo.db
+    session.add(note)
+    await session.flush()
+    await session.refresh(note)
     
     return note
 
@@ -278,24 +390,23 @@ async def delete_lead_note(
     svc: LeadService = Depends(get_lead_service),
 ):
     """Delete a note from a lead."""
-    from app.core.database import AsyncSessionLocal
     from sqlalchemy import select
     from app.models.note import LeadNote
     
     # Verify lead exists
     await svc.get_lead(lead_id)
     
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(
-            select(LeadNote).where(LeadNote.id == note_id, LeadNote.lead_id == lead_id)
-        )
-        note = result.scalar_one_or_none()
-        
-        if not note:
-            raise HTTPException(status_code=404, detail="Note not found")
-        
-        await session.delete(note)
-        await session.commit()
+    session = svc.repo.db
+    result = await session.execute(
+        select(LeadNote).where(LeadNote.id == note_id, LeadNote.lead_id == lead_id)
+    )
+    note = result.scalar_one_or_none()
+    
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    
+    await session.delete(note)
+    await session.flush()
     
     return None
 
@@ -309,34 +420,42 @@ async def assign_lead(
     lead_id: int,
     user_id: int,
     svc: LeadService = Depends(get_lead_service),
+    _ = Depends(require_role("manager"))
 ):
     """Assign lead to a user/manager."""
-    from app.core.database import AsyncSessionLocal
     from app.models.user import User
-    from sqlalchemy import select
-    
+    from sqlalchemy import select, func
+
     lead = await svc.get_lead(lead_id)
-    
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(select(User).where(User.id == user_id))
-        user = result.scalar_one_or_none()
-        
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        if not user.is_active:
-            raise HTTPException(status_code=400, detail="User is not active")
-        
-        # Check if user has capacity
-        if user.current_leads >= user.max_leads:
-            raise HTTPException(status_code=400, detail="User has reached max leads capacity")
-        
-        lead.assigned_to_id = user_id
-        user.current_leads += 1
-        
-        await session.commit()
-        await session.refresh(lead)
-    
+    session = svc.repo.db
+
+    result = await session.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="User is not active")
+
+    # Use real-time COUNT to avoid race condition (Step 1.4)
+    from app.models.lead import Lead as LeadModel
+    count_res = await session.execute(
+        select(func.count()).select_from(LeadModel)
+        .where(LeadModel.assigned_to_id == user_id)
+        .where(LeadModel.stage.notin_([ColdStage.LOST, ColdStage.TRANSFERRED]))
+    )
+    live_count = count_res.scalar() or 0
+
+    if live_count >= user.max_leads:
+        raise HTTPException(status_code=400, detail=f"User has reached max leads capacity ({user.max_leads})")
+
+    lead.assigned_to_id = user_id
+    user.current_leads = live_count + 1   # keep denormalized field in sync
+
+    await session.flush()
+    await session.refresh(lead)
+
     return lead
 
 
@@ -344,26 +463,35 @@ async def assign_lead(
 async def unassign_lead(
     lead_id: int,
     svc: LeadService = Depends(get_lead_service),
+    _ = Depends(require_role("manager"))
 ):
     """Unassign lead from user."""
-    from app.core.database import AsyncSessionLocal
     from app.models.user import User
-    from sqlalchemy import select
-    
+    from sqlalchemy import select, func
+    from app.models.lead import Lead as LeadModel
+
     lead = await svc.get_lead(lead_id)
-    
+    session = svc.repo.db
+
     if lead.assigned_to_id:
-        async with AsyncSessionLocal() as session:
-            result = await session.execute(select(User).where(User.id == lead.assigned_to_id))
-            user = result.scalar_one_or_none()
-            
-            if user and user.current_leads > 0:
-                user.current_leads -= 1
-            
-            lead.assigned_to_id = None
-            await session.commit()
-            await session.refresh(lead)
-    
+        result = await session.execute(select(User).where(User.id == lead.assigned_to_id))
+        user = result.scalar_one_or_none()
+
+        lead.assigned_to_id = None
+        await session.flush()  # flush before counting so this lead is excluded
+
+        if user:
+            # Recalculate from DB — avoids race condition
+            count_res = await session.execute(
+                select(func.count()).select_from(LeadModel)
+                .where(LeadModel.assigned_to_id == user.id)
+                .where(LeadModel.stage.notin_([ColdStage.LOST, ColdStage.TRANSFERRED]))
+            )
+            user.current_leads = count_res.scalar() or 0
+
+        await session.flush()
+        await session.refresh(lead)
+
     return lead
 
 
@@ -372,46 +500,136 @@ async def reassign_lead(
     lead_id: int,
     new_user_id: int,
     svc: LeadService = Depends(get_lead_service),
+    _ = Depends(require_role("manager"))
 ):
-    """
-    Reassign lead from current user to another user.
-    This is used to transfer lead ownership between managers.
-    """
-    from app.core.database import AsyncSessionLocal
+    """Reassign lead from current user to another user."""
     from app.models.user import User
-    from sqlalchemy import select
-    
+    from sqlalchemy import select, func
+    from app.models.lead import Lead as LeadModel
+
     lead = await svc.get_lead(lead_id)
     old_user_id = lead.assigned_to_id
-    
-    async with AsyncSessionLocal() as session:
-        # Get new user
-        result = await session.execute(select(User).where(User.id == new_user_id))
-        new_user = result.scalar_one_or_none()
-        
-        if not new_user:
-            raise HTTPException(status_code=404, detail="New user not found")
-        
-        if not new_user.is_active:
-            raise HTTPException(status_code=400, detail="New user is not active")
-        
-        if new_user.current_leads >= new_user.max_leads:
-            raise HTTPException(status_code=400, detail="New user has reached max leads capacity")
-        
-        # Decrease old user's count
-        if old_user_id:
-            result = await session.execute(select(User).where(User.id == old_user_id))
-            old_user = result.scalar_one_or_none()
-            if old_user and old_user.current_leads > 0:
-                old_user.current_leads -= 1
-        
-        # Increase new user's count
-        new_user.current_leads += 1
-        
-        # Assign lead
-        lead.assigned_to_id = new_user_id
-        
-        await session.commit()
-        await session.refresh(lead)
-    
+    session = svc.repo.db
+
+    # Get new user
+    result = await session.execute(select(User).where(User.id == new_user_id))
+    new_user = result.scalar_one_or_none()
+
+    if not new_user:
+        raise HTTPException(status_code=404, detail="New user not found")
+
+    if not new_user.is_active:
+        raise HTTPException(status_code=400, detail="New user is not active")
+
+    # Real-time capacity check for new user
+    new_count_res = await session.execute(
+        select(func.count()).select_from(LeadModel)
+        .where(LeadModel.assigned_to_id == new_user_id)
+        .where(LeadModel.stage.notin_([ColdStage.LOST, ColdStage.TRANSFERRED]))
+    )
+    new_live_count = new_count_res.scalar() or 0
+
+    if new_live_count >= new_user.max_leads:
+        raise HTTPException(status_code=400, detail=f"New user has reached max leads capacity ({new_user.max_leads})")
+
+    # Reassign
+    lead.assigned_to_id = new_user_id
+    await session.flush()  # flush before recounting
+
+    # Update counts via real-time COUNT to prevent race conditions
+    if old_user_id:
+        old_result = await session.execute(select(User).where(User.id == old_user_id))
+        old_user = old_result.scalar_one_or_none()
+        if old_user:
+            old_count_res = await session.execute(
+                select(func.count()).select_from(LeadModel)
+                .where(LeadModel.assigned_to_id == old_user_id)
+                .where(LeadModel.stage.notin_([ColdStage.LOST, ColdStage.TRANSFERRED]))
+            )
+            old_user.current_leads = old_count_res.scalar() or 0
+
+    new_user.current_leads = new_live_count + 1
+
+    await session.flush()
+    await session.refresh(lead)
+
     return lead
+
+# ──────────────────────────────────────────────
+# Attachments
+# ──────────────────────────────────────────────
+
+ALLOWED_MIME_TYPES = {
+    "image/jpeg", "image/png", "image/gif",
+    "application/pdf", "text/plain",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR.mkdir(exist_ok=True)
+
+@router.post("/{lead_id}/attachments", response_model=LeadAttachmentResponse)
+async def upload_attachment(
+    lead_id: int,
+    file: UploadFile = File(...),
+    svc: LeadService = Depends(get_lead_service),
+):
+    """Upload a file attachment for a lead (async I/O, 10MB limit, MIME whitelist)."""
+    # MIME type check
+    if file.content_type not in ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=415,
+            detail=f"File type '{file.content_type}' is not allowed. Accepted: {sorted(ALLOWED_MIME_TYPES)}",
+        )
+
+    try:
+        # Verify lead exists
+        await svc.get_lead(lead_id)
+
+        # Read content — enforces 10 MB hard limit
+        content = await file.read(MAX_FILE_SIZE + 1)
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(status_code=413, detail="File exceeds the 10 MB size limit.")
+
+        # Determine file type bucket
+        file_ext = os.path.splitext(file.filename or "")[1].lower()
+        file_type = "photo" if file_ext in {".jpg", ".jpeg", ".png", ".gif"} else "document"
+
+        # Unique filename — use timezone-aware timestamp (Step 1.2 + 1.6 combined fix)
+        safe_name = f"{lead_id}_{int(datetime.now(UTC).timestamp())}_{file.filename}"
+        file_path = UPLOAD_DIR / safe_name
+
+        # Async write — does NOT block the event loop
+        async with aiofiles.open(file_path, "wb") as buffer:
+            await buffer.write(content)
+
+        # Create DB record
+        attachment = await svc.add_attachment(
+            lead_id=lead_id,
+            file_name=file.filename,
+            file_type=file_type,
+            file_path=str(file_path),
+            file_size=len(content),
+            uploaded_by="BotUser"
+        )
+        return attachment
+
+    except LeadNotFoundError:
+        _not_found(lead_id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        _bad_request(str(e))
+
+@router.get("/{lead_id}/attachments", response_model=List[LeadAttachmentResponse])
+async def get_attachments(
+    lead_id: int,
+    svc: LeadService = Depends(get_lead_service)
+):
+    """List all attachments for a lead."""
+    try:
+        await svc.get_lead(lead_id)
+        return await svc.get_attachments(lead_id)
+    except LeadNotFoundError:
+        _not_found(lead_id)
+

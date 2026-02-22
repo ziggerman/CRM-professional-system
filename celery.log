@@ -1,0 +1,32 @@
+ 
+ -------------- celery@MacBook-Air-Nikolas.local v5.6.2 (recovery)
+--- ***** ----- 
+-- ******* ---- macOS-15.0.1-arm64-arm-64bit 2026-02-22 00:47:46
+- *** --- * --- 
+- ** ---------- [config]
+- ** ---------- .> app:         crm_tasks:0x104b52cd0
+- ** ---------- .> transport:   redis://localhost:6379/0
+- ** ---------- .> results:     redis://localhost:6379/0
+- *** --- * --- .> concurrency: 8 (prefork)
+-- ******* ---- .> task events: OFF (enable -E to monitor tasks in this worker)
+--- ***** ----- 
+ -------------- [queues]
+                .> celery           exchange=celery(direct) key=celery
+                
+
+[tasks]
+  . app.celery.tasks.ai_tasks.analyze_lead_task
+  . app.celery.tasks.ai_tasks.batch_analyze_leads_task
+  . app.celery.tasks.export_tasks.export_leads_csv_task
+  . app.celery.tasks.lead_tasks.auto_followup_task
+  . app.celery.tasks.lead_tasks.cleanup_old_leads_task
+  . app.celery.tasks.lead_tasks.process_stale_leads_task
+  . app.celery.tasks.statistics_tasks.export_leads_task
+  . app.celery.tasks.statistics_tasks.generate_advanced_report_task
+  . app.celery.tasks.statistics_tasks.generate_daily_statistics_task
+  . app.celery.tasks.statistics_tasks.generate_lead_report_task
+
+[2026-02-22 00:47:47,496: INFO/MainProcess] Connected to redis://localhost:6379/0
+[2026-02-22 00:47:47,510: INFO/MainProcess] mingle: searching for neighbors
+[2026-02-22 00:47:48,558: INFO/MainProcess] mingle: all alone
+[2026-02-22 00:47:48,598: INFO/MainProcess] celery@MacBook-Air-Nikolas.local ready.

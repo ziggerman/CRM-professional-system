@@ -1,138 +1,115 @@
-# CRM Lead Management Service
+# AEL CRM — AI-Powered Sales Command Center
 
-## Архітектура системи
-
-```
-crm_bot/
-├── app/
-│   ├── api/v1/              # HTTP endpoints (FastAPI routers)
-│   │   ├── leads.py         # CRUD + stage transitions
-│   │   └── sales.py         # Sales pipeline
-│   ├── core/                # Config, DB, dependencies
-│   │   ├── config.py
-│   │   ├── database.py
-│   │   └── deps.py
-│   ├── models/              # SQLAlchemy ORM models
-│   │   ├── lead.py
-│   │   └── sale.py
-│   ├── schemas/             # Pydantic request/response schemas
-│   │   ├── lead.py
-│   │   └── sale.py
-│   ├── repositories/        # Data access layer
-│   │   ├── lead_repo.py
-│   │   └── sale_repo.py
-│   ├── services/            # Business logic
-│   │   ├── lead_service.py
-│   │   └── transfer_service.py
-│   └── ai/                  # AI integration (isolated)
-│       ├── ai_service.py
-│       └── prompts.py
-├── alembic/                 # DB migrations
-├── tests/
-├── docker-compose.yml
-├── .env.example
-└── main.py
-```
+A professional, high-performance Lead Management system built with **FastAPI**, **Aiogram (Telegram Bot)**, **Celery**, and **OpenAI**. Designed to bridge the gap between cold lead generation and hot sales conversion using AI advisory and robust pipeline security.
 
 ---
 
-## Як працює система
+## 🏗 System Architecture & How it Works
 
-### Lifecycle лідa
+The system follows a clean, modular architecture designed for scalability and maintainability:
 
-```
-[Створення] → new → contacted → qualified → transferred ──→ [Sales: new → kyc → agreement → paid]
-                                               ↓
-                                             lost
-```
+### 📱 Telegram Bot (The "Frontend")
+- **Asynchronous UI**: Built with `aiogram 3.x`, featuring a rich, emoji-driven interface.
+- **State Management**: Uses FSM (Finite State Machine) for complex flows like `Search`, `Lead Creation`, and `Adding Notes`.
+- **Role-Aware**: Dynamic UI rendering based on User Roles (Agent, Manager, Admin).
 
-1. **Менеджер створює ліда** через `POST /api/v1/leads` (вказує джерело та домен).
-2. **Система зберігає ліда** у PostgreSQL зі статусом `new`.
-3. **Менеджер просуває ліда** через `PATCH /api/v1/leads/{id}/stage`.
-4. **AI-аналіз** запускається через `POST /api/v1/leads/{id}/analyze` — повертає score + recommendation.
-5. **Transfer** — `POST /api/v1/leads/{id}/transfer` — доступний тільки при score ≥ 0.6 і наявності домену.
+### ⚙️ FastAPI Backend (The "Engine")
+- **Service Layer Pattern**: All business logic is encapsulated in `app/services`, keeping routers thin and focused on validation.
+- **Repository Pattern**: Data access is isolated, supporting complex filtering and relationships via SQLAlchemy.
+- **API Security**: Rigid RBAC (Role-Based Access Control) enforced via custom FastAPI dependencies.
 
----
+### 🤖 AI Layer (The "Advisor")
+- **OpenAI Integration**: Uses `gpt-4o-mini` for lead scoring and qualitative recommendation.
+- **Cache Integrity**: Implements Redis caching with deterministic keys (SHA-256) to prevent redundant AI calls.
+- **Stale Protection**: Automatically detects if a lead's data has changed significantly since the last analysis.
 
-## Де використовується AI і чому
-
-AI — це **advisory-шар**, не decision-maker. Він надає рекомендацію, але фінальне рішення залишається за менеджером.
-
-### Що отримує AI
-
-```json
-{
-  "source": "partner",
-  "stage": "qualified",
-  "message_count": 12,
-  "has_business_domain": true,
-  "business_domain": "fintech",
-  "days_since_created": 5
-}
-```
-
-### Що повертає AI
-
-```json
-{
-  "score": 0.78,
-  "recommendation": "transfer_to_sales",
-  "reason": "High activity, clear domain, partner source — strong signals"
-}
-```
-
-### Чому саме ці дані
-
-- **source** — партнерські ліди статистично тепліші
-- **stage** — `qualified` сигналізує про підтверджену потребу
-- **message_count** — проксі активності та зацікавленості
-- **has_business_domain** — без домену sales не зможуть кваліфікувати
-- **days_since_created** — довго "зависший" лід знижує ймовірність
+### 📦 Infrastructure
+- **PostgreSQL/SQLite**: Relational storage for leads, sales, history, and user roles.
+- **Redis**: Acts as the Celery broker and high-performance result/AI cache.
+- **Celery**: Handles intensive background tasks like CSV generation and stale lead notifications.
+- **WebSockets**: Provides low-latency dashboard reload signals to active clients.
 
 ---
 
-## Де AI обмежений (Hard Gates)
+## 🧠 AI Integration: Where, Why & What
 
-| Умова | Перевірка | Де |
-|-------|-----------|-----|
-| score ≥ 0.6 | бізнес-логіка, не AI | `transfer_service.py` |
-| наявність домену | бізнес-логіка | `transfer_service.py` |
-| коректна послідовність етапів | бізнес-логіка | `lead_service.py` |
-| transferred/paid незмінні | бізнес-логіка | `lead_service.py` |
+AI in AEL CRM is designed as an **advisory layer**, not an autonomous decision-maker.
 
-AI **ніколи не змінює стан сам**. Він лише рекомендує.
+### Where and Why?
+- **Lead Scoring**: AI analyzes lead activity and metadata to assign a "Warmth Score" (0.0 - 1.0). This helps humans prioritize high-value leads.
+- **Recommendations**: It provides a textual reason for the score, suggesting whether to "transfer to sales", "keep nurturing", or "discard as low quality".
+- **Objective Analysis**: Unlike humans, AI is not biased by conversation fatigue; it evaluates lead features against historical "winning" patterns.
 
----
+### What Data is "AI"?
+The following fields are strictly AI-generated:
+- `ai_score`: A float value representing conversion probability.
+- `ai_recommendation`: A structured suggestion (`transfer` / `nurture` / `discard`).
+- `ai_reason`: The logic behind the recommendation.
+- `last_ai_analysis_at`: Timestamp to track data freshness.
 
-## Які рішення приймає людина
-
-- Просувати ліда по етапах (contacted, qualified)
-- Запускати AI-аналіз (коли вважає за потрібне)
-- Ігнорувати чи прийняти рекомендацію AI
-- Фінально ініціювати transfer
-
----
-
-## Що б ускладнив у реальному проекті
-
-1. **AI Feedback Loop** — зберігати результати угод та дотренувати модель на реальних даних
-2. **Webhooks / Events** — EventBus для нотифікацій менеджера при зміні score
-3. **Audit Log** — повнаhistoryзмін стану лідa
-4. **Rate limiting AI** — кешувати AI-оцінку (TTL 1 год), не кликати LLM при кожному запиті
-5. **Multi-tenant** — ізоляція по компаніях (Row Level Security у PostgreSQL)
-6. **Real Telegram integration** — aiogram 3.x + FSM для cold outreach
-7. **Background tasks** — авто-запуск AI після N повідомлень (Celery / arq)
-8. **Observability** — OpenTelemetry traces для AI latency, Prometheus метрики
+### AI Input Features (Isolation)
+To maintain privacy and focus, the AI only sees **anonymous metadata**:
+- `Source`: (Scanner vs Partner vs Manual)
+- `Stage`: (Pipeline positioning)
+- `Message Count`: (Engagement proxy)
+- `Domain Presence`: (Qualification requirement)
+- `Lead Age`: (Urgency signal)
 
 ---
 
-## Запуск
+## ⚖️ Human-in-the-Loop: Decisions
 
+We maintain a strict boundary where **Humans make all state-changing decisions**:
+
+| Decision | Human Role | AI Role |
+|----------|------------|---------|
+| **Stage Transitions** | Agent / Manager | None |
+| **Lead Assignment** | Manager / Admin | None |
+| **Final Transfer to Sales** | Manager | Provides advisory score |
+| **Marking as "Lost"** | Agent / Manager | None |
+| **File Attachments** | Agent (Manual Upload) | None |
+| **CSV Export** | Admin | None |
+
+---
+
+## 🛠 What would be complicated in a Real Project? (Production Readiness)
+
+While this MVP is robust, moving to a global enterprise scale would involve:
+
+1.  **AI Feedback Loops (RLHF)**: Implementing a system where AI "learns" from actual closed sales. If AI recommended a lead that eventually "lost" in sales, the model should be fine-tuned.
+2.  **Row-Level Security (RLS)**: True Multi-tenancy. Ensuring that Company A can never see Company B's leads even at the database driver level.
+3.  **Advanced Vector Search**: Moving beyond `ILIKE` to semantic search using OpenAI Embeddings in a Vector DB (Pinecone/Milvus) for deep conversation analysis.
+4.  **Complex Permissions**: Moving from internal User IDs to a full-blown Auth0/Cognito integration with OAuth2 scopes.
+5.  **Circuit Breakers**: Protecting against OpenAI or Redis downtime using patterns that allow the CRM to function in "Offline/Safe Mode".
+6.  **Observability Stack**: Integration with Datadog/Sentry for real-time alerting on API latency or Bot crash rates.
+7.  **Data Sovereignty**: Implementing S3 storage with presigned URLs and encryption at rest for sensitive file attachments.
+
+---
+
+## 🚀 Getting Started
+
+### 1. Environment Setup
 ```bash
 cp .env.example .env
-docker-compose up -d
+# Required: TELEGRAM_BOT_TOKEN, OPENAI_API_KEY, API_SECRET_TOKEN
+```
+
+### 2. Launch with Docker (Recommended)
+```bash
+docker-compose up -d --build
+```
+
+### 3. Manual Startup
+```bash
+# Apply Migrations
 alembic upgrade head
+
+# Run Celery Worker
+celery -A app.celery.config worker --loglevel=info
+
+# Run FastAPI
 uvicorn main:app --reload
 ```
 
-API документація: http://localhost:8000/docs
+---
+*Developed for Ascend Edge Ltd — CRM Modernization Initiative.*

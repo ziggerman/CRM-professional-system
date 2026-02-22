@@ -1,6 +1,7 @@
 """
 Sale Repository - Data Access Layer for Sale model.
 """
+from datetime import datetime, UTC
 from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

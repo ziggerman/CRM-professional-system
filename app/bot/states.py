@@ -5,11 +5,27 @@ from aiogram.fsm.state import State, StatesGroup
 
 
 class LeadCreationState(StatesGroup):
-    """States for lead creation flow."""
+    """States for the new lead creation flow."""
     waiting_for_source = State()
+    waiting_for_name = State()
+    waiting_for_email = State()
+    waiting_for_phone = State()
+    waiting_for_username = State()
     waiting_for_domain = State()
-    waiting_for_telegram_id = State()
+    waiting_for_intent = State()
+    waiting_for_qualification = State()
     confirm = State()
+
+
+class AddNoteState(StatesGroup):
+    """States for the add-note flow (triggered from lead detail)."""
+    waiting_for_text = State()     # user types note text
+    waiting_for_confirm = State()  # user confirms or edits
+
+
+class SearchState(StatesGroup):
+    """States for the lead search flow."""
+    waiting_for_query = State()  # user types search query
 
 
 class LeadManagementState(StatesGroup):

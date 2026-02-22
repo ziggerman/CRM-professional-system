@@ -68,6 +68,27 @@ def analyze_lead_task(self, lead_id: int) -> dict:
                 await lead_repo.save(lead)
                 await session.commit()
                 
+                # High-Value alert for top leads
+                if result.score >= 0.8:
+                    try:
+                        from app.services.notification_service import NotificationService
+                        notif_svc = NotificationService()
+                        
+                        source_icon = "📡"
+                        alert_text = (
+                            f"🔥 <b>HIGH-VALUE LEAD ALERT!</b>\n"
+                            f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                            f"Lead #{lead.id} scored <b>{result.score:.2f}</b>!\n\n"
+                            f"👤 <b>Name:</b> {lead.full_name or '—'}\n"
+                            f"🎯 <b>Intent:</b> {lead.intent or '—'}\n"
+                            f"💵 <b>Budget:</b> {lead.budget or '—'}\n\n"
+                            f"💡 <b>AI Recommendation:</b>\n<i>{result.recommendation}</i>\n"
+                        )
+                        await notif_svc.notify_admins(alert_text)
+                        await notif_svc.close()
+                    except Exception as e:
+                        logger.error(f"Failed to send high-value lead alert: {e}")
+
                 logger.info(f"Lead {lead_id} analyzed successfully. Score: {result.score}")
                 return {
                     "lead_id": lead_id,

@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     APP_NAME: str = "CRM Lead Management"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
+    
+    # Security
+    API_SECRET_TOKEN: str = Field(default="dev_secret_token_123")
+    SECRET_KEY: str = Field(default="dev_very_secret_key_change_me_in_prod")
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
 
     # CORS
     ALLOWED_ORIGINS: list[str] = ["*"]

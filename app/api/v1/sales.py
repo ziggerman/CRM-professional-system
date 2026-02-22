@@ -15,7 +15,11 @@ from app.schemas.sale import (
 from app.repositories.sale_repo import SaleRepository
 from app.services.transfer_service import TransferService, TransferError
 
-router = APIRouter()
+from app.core.security import get_current_user, require_role
+from app.models.user import User
+
+
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 def _not_found(sale_id: int):

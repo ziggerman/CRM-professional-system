@@ -8,7 +8,15 @@ from app.core.deps import get_automation_service
 from app.services.automation_service import AutomationService
 
 
-router = APIRouter(prefix="/api/v1/automation", tags=["automation"])
+from app.core.security import get_current_user, require_role
+from app.models.user import User
+
+
+router = APIRouter(
+    prefix="/api/v1/automation", 
+    tags=["automation"],
+    dependencies=[Depends(get_current_user)]
+)
 
 
 class AutoAssignRequest(BaseModel):
@@ -113,3 +121,15 @@ async def get_unassigned_leads(
         "total": len(leads),
         "leads": [{"id": l.id, "created_at": l.created_at.isoformat()} for l in leads]
     }
+
+
+@router.post("/reengage")
+async def trigger_reengagement(
+    days: int = 7,
+    svc: AutomationService = Depends(get_automation_service),
+):
+    """
+    Trigger re-engagement workflows for stale leads.
+    Step 6.3 — Business Logic
+    """
+    return await svc.trigger_reengagement(days=days)

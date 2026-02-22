@@ -1,5 +1,6 @@
 """
 Enhanced AI Agent Bot - Full interactive experience with AI agents.
+Formatting handled via app.bot.ui for consistency.
 """
 import logging
 import asyncio
@@ -14,6 +15,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.client.default import DefaultBotProperties
 
 from app.bot.config import bot_settings
+from app.bot import ui as bot_ui
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +30,10 @@ async def fetch_api(endpoint: str) -> dict:
     """Fetch data from API."""
     import aiohttp
     base_url = "http://localhost:8000"
+    headers = {"Authorization": f"Bearer {bot_settings.API_SECRET_TOKEN}"} if hasattr(bot_settings, 'API_SECRET_TOKEN') else {}
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"{base_url}{endpoint}", timeout=aiohttp.ClientTimeout(total=5)) as resp:
+            async with session.get(f"{base_url}{endpoint}", headers=headers, timeout=aiohttp.ClientTimeout(total=5)) as resp:
                 if resp.status == 200:
                     return await resp.json()
                 return {"error": f"Status {resp.status}"}
@@ -43,9 +46,10 @@ async def post_api(endpoint: str, data: dict = None) -> dict:
     """Post data to API."""
     import aiohttp
     base_url = "http://localhost:8000"
+    headers = {"Authorization": f"Bearer {bot_settings.API_SECRET_TOKEN}"} if hasattr(bot_settings, 'API_SECRET_TOKEN') else {}
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(f"{base_url}{endpoint}", json=data or {}, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+            async with session.post(f"{base_url}{endpoint}", json=data or {}, headers=headers, timeout=aiohttp.ClientTimeout(total=10)) as resp:
                 if resp.status in (200, 201):
                     return await resp.json()
                 return {"error": f"Status {resp.status}"}
@@ -151,72 +155,19 @@ def get_filter_keyboard() -> InlineKeyboardMarkup:
 # Message Formatters
 # ──────────────────────────────────────────────
 
-def format_dashboard(stats: dict) -> str:
-    """Format dashboard message."""
-    leads = stats.get("leads", {})
-    sales = stats.get("sales", {})
-    
-    return f"""
-📊 <b>DASHBOARD</b>
-
-<b>📈 LEADS</b>
-├─ Total: {leads.get('total', 0)}
-├─ 🆕 New: {leads.get('new', 0)}
-├─ 📞 Contacted: {leads.get('contacted', 0)}
-├─ ✓ Qualified: {leads.get('qualified', 0)}
-├─ ➡️ Transferred: {leads.get('transferred', 0)}
-└─ ❌ Lost: {leads.get('lost', 0)}
-
-<b>💰 SALES</b>
-├─ Total: {sales.get('total', 0)}
-├─ 📋 KYC: {sales.get('kyc', 0)}
-├─ 📝 Agreement: {sales.get('agreement', 0)}
-├─ 💵 Paid: {sales.get('paid', 0)}
-└─ ❌ Lost: {sales.get('lost', 0)}
-
-<b>📊 METRICS</b>
-├─ Conversion: {stats.get('conversion_rate', 0)}%
-├─ Avg Deal: ${stats.get('avg_deal_amount', 0):.0f}
-└─ Revenue: ${stats.get('total_revenue', 0):,}
-"""
-
-
-def format_lead_card(lead: dict) -> str:
-    """Format single lead card."""
-    status_emoji = {
-        "new": "🆕",
-        "contacted": "📞",
-        "qualified": "✓",
-        "transferred": "➡️",
-        "lost": "❌"
-    }
-    
-    emoji = status_emoji.get(lead.get("stage", "new"), "❓")
-    domain = lead.get("business_domain", "N/A")
-    source = lead.get("source", "N/A")
-    score = lead.get("ai_score", "N/A")
-    
-    return f"""
-<b>Lead #{lead.get('id')}</b> {emoji}
-
-🏢 Domain: <b>{domain}</b>
-📥 Source: {source}
-🤖 AI Score: {score}
-📅 Created: {lead.get('created_at', 'N/A')[:10]}
-"""
+# Use shared formatters from ui.py
+format_dashboard = bot_ui.format_dashboard
+format_lead_card = bot_ui.format_lead_card
 
 
 def format_leads_list(leads: list, title: str = "LEADS") -> str:
-    """Format leads list."""
+    """Format leads list using shared ui.py lead cards."""
     if not leads:
-        return f"📋 No leads found."
-    
-    text = f"📋 <b>{title}</b>\n\n"
-    
-    for lead in leads[:10]:  # Show first 10
-        text += format_lead_card(lead)
+        return "📋 <b>No leads found.</b>"
+    text = bot_ui.format_leads_list(leads, title, 0, 1) + "\n\n"
+    for lead in leads[:10]:
+        text += bot_ui.format_lead_card(lead, show_pipeline=False)
         text += "\n" + "─" * 20 + "\n\n"
-    
     return text
 
 
@@ -228,36 +179,19 @@ def format_leads_list(leads: list, title: str = "LEADS") -> str:
 async def cmd_start(message: Message, state: FSMContext):
     """Handle /start command with welcome flow."""
     user = message.from_user
-    user_id = user.id
-    is_admin = user_id in bot_settings.TELEGRAM_ADMIN_IDS
-    
-    welcome_text = f"""
-👋 <b>Welcome to CRM Bot!</b>
+    is_admin = user.id in bot_settings.TELEGRAM_ADMIN_IDS
 
-<b>Your AI-Powered Sales Assistant</b>
+    await message.answer(
+        bot_ui.format_welcome(user.first_name, is_admin),
+        reply_markup=get_enhanced_main_menu()
+    )
 
-I'm here to help you manage leads and sales with the power of AI.
-
-<b>Features:</b>
-✓ AI-powered lead analysis
-✓ Smart recommendations
-✓ Automated workflows
-✓ Real-time dashboard
-✓ Instant notifications
-
-{"🎉 You have admin access!" if is_admin else "📩 Contact admin for full access."}
-
-<i>Loading your dashboard...</i>
-"""
-    
-    await message.answer(welcome_text, reply_markup=get_enhanced_main_menu())
-    
     # Auto-fetch dashboard
     try:
         stats = await fetch_api("/api/v1/dashboard")
-        if "error" not in stats:
+        if stats and "error" not in stats:
             await message.answer(format_dashboard(stats))
-    except:
+    except Exception:
         pass
 
 
@@ -287,13 +221,13 @@ async def cb_main_menu(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "menu:dashboard")
 async def cb_dashboard(callback: CallbackQuery, state: FSMContext):
     """Dashboard callback."""
-    await callback.message.edit_text("📊 Loading dashboard...")
-    
+    await callback.message.edit_text(bot_ui.format_loading("Loading dashboard..."))
+
     stats = await fetch_api("/api/v1/dashboard")
-    
-    if "error" in stats:
+
+    if not stats or "error" in stats:
         await callback.message.edit_text(
-            f"❌ Error loading dashboard: {stats['error']}",
+            bot_ui.format_error("Could not load dashboard.", stats.get('error') if stats else "API unavailable"),
             reply_markup=get_back_to_main()
         )
     else:
@@ -301,7 +235,6 @@ async def cb_dashboard(callback: CallbackQuery, state: FSMContext):
             format_dashboard(stats),
             reply_markup=get_back_to_main()
         )
-    
     await callback.answer()
 
 
@@ -585,30 +518,28 @@ async def cb_lead_action(callback: CallbackQuery, state: FSMContext):
     lead_id = parts[2] if len(parts) > 2 else None
     
     if action == "analyze" and lead_id:
-        await callback.message.edit_text(
-            f"🤖 <b>AI ANALYSIS</b>\n\n"
-            f"Analyzing lead #{lead_id}...",
-            reply_markup=get_back_to_main()
-        )
-        
+        await callback.message.edit_text(bot_ui.format_loading(f"Analyzing lead #{lead_id}..."))
+
         result = await post_api(f"/api/v1/leads/{lead_id}/analyze", {})
-        
-        if "error" not in result:
+
+        if result and "error" not in result:
             score = result.get("score", 0)
             recommendation = result.get("recommendation", "N/A")
-            reason = result.get("reason", "No reason provided")
-            
-            await callback.message.edit_text(
-                f"🤖 <b>AI ANALYSIS RESULT</b>\n\n"
-                f"Lead #{lead_id}\n\n"
-                f"📊 Score: {score:.2f}\n"
-                f"💡 Recommendation: {recommendation}\n"
-                f"📝 {reason}",
-                reply_markup=get_lead_detail_actions(lead_id)
+            reason = result.get("reason", "")
+
+            text = (
+                f"🤖 <b>AI ANALYSIS RESULT</b>  —  Lead #{lead_id}\n\n"
+                f"<b>Score:</b>\n{bot_ui.ai_score_bar(score)}\n\n"
+                f"<b>💡 Recommendation:</b>  <i>{recommendation}</i>\n"
             )
+            if reason:
+                text += f"\n<b>📋 Reason:</b>\n<i>{reason}</i>"
+
+            await callback.message.edit_text(text, reply_markup=get_lead_detail_actions(lead_id))
         else:
+            err = result.get('error') if result else "AI service unavailable"
             await callback.message.edit_text(
-                f"❌ Analysis failed: {result.get('error')}",
+                bot_ui.format_error(f"Analysis failed for lead #{lead_id}.", err),
                 reply_markup=get_back_to_main()
             )
     

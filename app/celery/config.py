@@ -15,6 +15,7 @@ celery_app = Celery(
         "app.celery.tasks.ai_tasks",
         "app.celery.tasks.lead_tasks",
         "app.celery.tasks.statistics_tasks",
+        "app.celery.tasks.export_tasks",
     ],
 )
 

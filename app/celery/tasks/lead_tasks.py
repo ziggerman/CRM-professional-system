@@ -17,10 +17,11 @@ def process_stale_leads_task() -> dict:
     """
     Process leads that haven't been contacted in configured days.
     
-    Finds leads in 'new' stage older than 7 days and logs them for review.
-    This is a placeholder for more complex automation.
+    Finds leads in 'new' stage older than 7 days and notifies managers via Telegram.
     """
     import asyncio
+    from aiogram import Bot
+    from app.core.config import settings
     
     async def _process():
         stale_days = 7
@@ -32,10 +33,32 @@ def process_stale_leads_task() -> dict:
             
             if stale_leads:
                 logger.info(f"Found {len(stale_leads)} stale leads")
-                # Here you could:
-                # - Notify managers
-                # - Auto-mark as lost
-                # - Re-queue for analysis
+                
+                # Notify managers via shared NotificationService
+                from app.services.notification_service import NotificationService
+                notif_svc = NotificationService()
+                
+                msg_text = (
+                    f"🚨 <b>STALE LEADS ALERT</b> 🚨\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"Found {len(stale_leads)} leads with no activity for {stale_days} days.\n\n"
+                )
+                for lead in stale_leads[:5]:  # Show up to 5 examples
+                    name = lead.full_name or "Unnamed"
+                    msg_text += f"• <b>Lead #{lead.id}</b> | {name} ({lead.stage.value})\n"
+                
+                if len(stale_leads) > 5:
+                    msg_text += f"\n...and {len(stale_leads) - 5} more.\n"
+                
+                msg_text += f"\n💡 <i>Please follow up with these clients immediately.</i>"
+                
+                await notif_svc.notify_admins(msg_text)
+                await notif_svc.close()
+
+                # Trigger direct nurture for each lead
+                for lead in stale_leads:
+                    auto_followup_task.delay(lead.id)
+
                 return {
                     "processed": len(stale_leads),
                     "lead_ids": [lead.id for lead in stale_leads],
@@ -49,33 +72,45 @@ def process_stale_leads_task() -> dict:
 @celery_app.task
 def auto_followup_task(lead_id: int) -> dict:
     """
-    Send followup notification for a lead.
-    
-    Args:
-        lead_id: ID of the lead
-        
-    Returns:
-        Dict with task result
+    Automated nurture: Send re-engagement message directly to a stalled lead.
     """
     import asyncio
+    from app.services.notification_service import NotificationService
+    from app.services.lead_service import LeadService
+    from app.repositories.history_repo import HistoryRepository
     
     async def _followup():
         async with AsyncSessionLocal() as session:
             lead_repo = LeadRepository(session)
+            history_repo = HistoryRepository(session)
+            lead_svc = LeadService(lead_repo, history_repo)
             
-            lead = await lead_repo.get_by_id(lead_id)
-            if not lead:
-                return {"error": "Lead not found"}
+            lead = await lead_svc.get_lead(lead_id)
+            if not lead or not lead.telegram_id:
+                return {"error": "Lead or Telegram ID not found"}
             
-            # Here you would integrate with Telegram bot
-            # to send a followup message
-            logger.info(f"Followup needed for lead {lead_id}: {lead.telegram_id}")
+            # Log the nurture attempt
+            await lead_svc.nurture_lead(lead, reason="Automated 7-day follow-up")
+            await session.commit()
             
-            return {
-                "lead_id": lead_id,
-                "telegram_id": lead.telegram_id,
-                "status": "followup_queued",
-            }
+            # Send message via NotificationService
+            notif_svc = NotificationService()
+            
+            nurture_text = (
+                f"👋 <b>Hi {lead.full_name or ''}!</b>\n\n"
+                f"We noticed we haven't heard from you in a few days regarding your interest in <b>{lead.business_domain.value if lead.business_domain else 'our services'}</b>.\n\n"
+                f"Do you have any questions we can help with? We're here to assist! ✨"
+            )
+            
+            success = await notif_svc.send_direct(lead.telegram_id, nurture_text)
+            await notif_svc.close()
+            
+            if success:
+                logger.info(f"Successfully sent nurture message to lead {lead_id}")
+                return {"status": "sent", "lead_id": lead_id}
+            else:
+                logger.error(f"Failed to send nurture message to lead {lead_id}")
+                return {"status": "failed", "lead_id": lead_id}
     
     return asyncio.run(_followup())
 

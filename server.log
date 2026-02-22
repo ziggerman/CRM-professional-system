@@ -1,0 +1,206 @@
+INFO:     Started server process [55067]
+INFO:     Waiting for application startup.
+Warning: prometheus_fastapi_instrumentator not found, metrics disabled.
+2026-02-22 01:54:15,121 [INFO] root: Structlog not found, falling back to standard logging.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-02-22 01:54:16,815 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-02-22 01:54:16,821 [INFO] app.ai.ai_service: AI Model gpt-4o-mini warmed up successfully.
+2026-02-22 01:59:23,431 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 01:59:23,545 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57026 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 01:59:23,557 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-22 01:59:23,571 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:57029 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-22 01:59:24,836 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 01:59:24,838 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57031 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 01:59:24,849 [INFO] app.core.middleware: Request started: GET /api/v1/leads/4
+2026-02-22 01:59:24,853 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/4 - 200
+INFO:     127.0.0.1:57033 - "GET /api/v1/leads/4 HTTP/1.1" 200 OK
+2026-02-22 01:59:30,497 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 01:59:30,500 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57035 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 01:59:30,511 [INFO] app.core.middleware: Request started: POST /api/v1/leads/4/analyze
+2026-02-22 01:59:30,531 [INFO] app.core.middleware: Request completed: POST /api/v1/leads/4/analyze - 200
+INFO:     127.0.0.1:57037 - "POST /api/v1/leads/4/analyze HTTP/1.1" 200 OK
+2026-02-22 01:59:35,525 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 01:59:35,529 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57039 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 01:59:35,540 [INFO] app.core.middleware: Request started: GET /api/v1/leads/4
+2026-02-22 01:59:35,542 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/4 - 200
+INFO:     127.0.0.1:57041 - "GET /api/v1/leads/4 HTTP/1.1" 200 OK
+2026-02-22 01:59:37,249 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 01:59:37,252 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57043 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 01:59:37,263 [INFO] app.core.middleware: Request started: PATCH /api/v1/leads/4/stage
+2026-02-22 01:59:37,267 [INFO] app.core.middleware: Request completed: PATCH /api/v1/leads/4/stage - 400
+INFO:     127.0.0.1:57045 - "PATCH /api/v1/leads/4/stage HTTP/1.1" 400 Bad Request
+2026-02-22 02:00:38,004 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:00:38,014 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57071 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:00:38,032 [INFO] app.core.middleware: Request started: GET /api/v1/sales
+2026-02-22 02:00:38,057 [INFO] app.core.middleware: Request completed: GET /api/v1/sales - 200
+INFO:     127.0.0.1:57073 - "GET /api/v1/sales HTTP/1.1" 200 OK
+2026-02-22 02:00:39,372 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:00:39,378 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57077 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:00:39,391 [INFO] app.core.middleware: Request started: GET /api/v1/sales/2
+2026-02-22 02:00:39,395 [INFO] app.core.middleware: Request completed: GET /api/v1/sales/2 - 200
+INFO:     127.0.0.1:57079 - "GET /api/v1/sales/2 HTTP/1.1" 200 OK
+2026-02-22 02:01:06,303 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:01:06,312 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57089 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:01:06,326 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-22 02:01:06,336 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:57091 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-22 02:03:45,894 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:03:46,195 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57158 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:03:46,234 [INFO] app.core.middleware: Request started: GET /api/v1/sales
+2026-02-22 02:03:46,272 [INFO] app.core.middleware: Request completed: GET /api/v1/sales - 200
+INFO:     127.0.0.1:57160 - "GET /api/v1/sales HTTP/1.1" 200 OK
+2026-02-22 02:03:48,049 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:03:48,058 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57162 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:03:48,088 [INFO] app.core.middleware: Request started: GET /api/v1/sales/1
+2026-02-22 02:03:48,097 [INFO] app.core.middleware: Request completed: GET /api/v1/sales/1 - 200
+INFO:     127.0.0.1:57164 - "GET /api/v1/sales/1 HTTP/1.1" 200 OK
+2026-02-22 02:04:00,680 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:04:00,704 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57175 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:04:00,717 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-22 02:04:00,723 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:57177 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-22 02:04:02,200 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:04:02,218 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57182 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:04:02,232 [INFO] app.core.middleware: Request started: GET /api/v1/leads/4
+2026-02-22 02:04:02,246 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/4 - 200
+INFO:     127.0.0.1:57184 - "GET /api/v1/leads/4 HTTP/1.1" 200 OK
+2026-02-22 02:04:09,149 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:04:09,158 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57187 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:04:09,189 [INFO] app.core.middleware: Request started: GET /api/v1/leads/4
+2026-02-22 02:04:09,193 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/4 - 200
+INFO:     127.0.0.1:57189 - "GET /api/v1/leads/4 HTTP/1.1" 200 OK
+2026-02-22 02:04:14,841 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:04:14,849 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57191 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:04:14,863 [INFO] app.core.middleware: Request started: PATCH /api/v1/leads/4/stage
+2026-02-22 02:04:14,876 [INFO] app.core.middleware: Request completed: PATCH /api/v1/leads/4/stage - 400
+INFO:     127.0.0.1:57193 - "PATCH /api/v1/leads/4/stage HTTP/1.1" 400 Bad Request
+2026-02-22 02:04:25,830 [INFO] app.core.middleware: Request started: PATCH /api/v1/leads/4/stage
+2026-02-22 02:04:25,837 [INFO] app.core.middleware: Request completed: PATCH /api/v1/leads/4/stage - 422
+INFO:     127.0.0.1:57202 - "PATCH /api/v1/leads/4/stage HTTP/1.1" 422 Unprocessable Entity
+2026-02-22 02:04:25,849 [INFO] app.core.middleware: Request started: PATCH /api/v1/leads/4/stage
+2026-02-22 02:04:25,911 [INFO] app.core.middleware: Request completed: PATCH /api/v1/leads/4/stage - 200
+INFO:     127.0.0.1:57204 - "PATCH /api/v1/leads/4/stage HTTP/1.1" 200 OK
+2026-02-22 02:04:49,472 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:04:49,491 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57215 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:04:49,506 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-22 02:04:49,512 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:57217 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-22 02:05:04,809 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:05:04,817 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57228 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:05:04,832 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-22 02:05:04,840 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:57230 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-22 02:05:10,969 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:05:10,986 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57234 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:05:11,005 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-22 02:05:11,011 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:57236 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-22 02:05:15,873 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:05:15,881 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57240 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:05:15,897 [INFO] app.core.middleware: Request started: GET /api/v1/leads/6
+2026-02-22 02:05:15,901 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/6 - 200
+INFO:     127.0.0.1:57242 - "GET /api/v1/leads/6 HTTP/1.1" 200 OK
+2026-02-22 02:05:20,333 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:05:20,342 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57249 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:05:20,357 [INFO] app.core.middleware: Request started: POST /api/v1/leads/6/analyze
+2026-02-22 02:05:20,406 [INFO] app.core.middleware: Request completed: POST /api/v1/leads/6/analyze - 200
+INFO:     127.0.0.1:57251 - "POST /api/v1/leads/6/analyze HTTP/1.1" 200 OK
+2026-02-22 02:05:44,502 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:05:44,550 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57266 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:05:44,565 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-22 02:05:44,599 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:57268 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-22 02:05:47,168 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:05:47,174 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57271 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:05:47,188 [INFO] app.core.middleware: Request started: GET /api/v1/leads/7
+2026-02-22 02:05:47,191 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/7 - 200
+INFO:     127.0.0.1:57273 - "GET /api/v1/leads/7 HTTP/1.1" 200 OK
+2026-02-22 02:05:51,968 [INFO] app.core.middleware: Request started: PATCH /api/v1/leads/4/stage
+2026-02-22 02:05:51,973 [INFO] app.core.middleware: Request completed: PATCH /api/v1/leads/4/stage - 422
+INFO:     127.0.0.1:57277 - "PATCH /api/v1/leads/4/stage HTTP/1.1" 422 Unprocessable Entity
+2026-02-22 02:05:51,985 [INFO] app.core.middleware: Request started: PATCH /api/v1/leads/4/stage
+2026-02-22 02:05:52,008 [INFO] app.core.middleware: Request completed: PATCH /api/v1/leads/4/stage - 200
+INFO:     127.0.0.1:57279 - "PATCH /api/v1/leads/4/stage HTTP/1.1" 200 OK
+2026-02-22 02:06:05,747 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:06:05,765 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57289 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:06:05,777 [INFO] app.core.middleware: Request started: POST /api/v1/leads/7/analyze
+2026-02-22 02:06:05,788 [INFO] app.core.middleware: Request completed: POST /api/v1/leads/7/analyze - 200
+INFO:     127.0.0.1:57291 - "POST /api/v1/leads/7/analyze HTTP/1.1" 200 OK
+2026-02-22 02:06:08,467 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:06:08,482 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57294 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:06:08,493 [INFO] app.core.middleware: Request started: POST /api/v1/leads/7/analyze
+2026-02-22 02:06:08,502 [INFO] app.core.middleware: Request completed: POST /api/v1/leads/7/analyze - 200
+INFO:     127.0.0.1:57296 - "POST /api/v1/leads/7/analyze HTTP/1.1" 200 OK
+2026-02-22 02:06:11,368 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:06:11,376 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57299 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:06:11,387 [INFO] app.core.middleware: Request started: POST /api/v1/leads/7/analyze
+2026-02-22 02:06:11,423 [INFO] app.core.middleware: Request completed: POST /api/v1/leads/7/analyze - 200
+INFO:     127.0.0.1:57301 - "POST /api/v1/leads/7/analyze HTTP/1.1" 200 OK
+2026-02-22 02:06:14,096 [INFO] app.core.middleware: Request started: PATCH /api/v1/leads/4/stage
+2026-02-22 02:06:14,099 [INFO] app.core.middleware: Request completed: PATCH /api/v1/leads/4/stage - 422
+INFO:     127.0.0.1:57303 - "PATCH /api/v1/leads/4/stage HTTP/1.1" 422 Unprocessable Entity
+2026-02-22 02:06:14,111 [INFO] app.core.middleware: Request started: PATCH /api/v1/leads/4/stage
+2026-02-22 02:06:14,120 [INFO] app.core.middleware: Request completed: PATCH /api/v1/leads/4/stage - 200
+INFO:     127.0.0.1:57305 - "PATCH /api/v1/leads/4/stage HTTP/1.1" 200 OK
+2026-02-22 02:06:15,058 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:06:15,065 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57307 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:06:15,090 [INFO] app.core.middleware: Request started: POST /api/v1/leads/7/analyze
+2026-02-22 02:06:15,104 [INFO] app.core.middleware: Request completed: POST /api/v1/leads/7/analyze - 200
+INFO:     127.0.0.1:57309 - "POST /api/v1/leads/7/analyze HTTP/1.1" 200 OK
+2026-02-22 02:06:17,503 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:06:17,505 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57312 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:06:17,518 [INFO] app.core.middleware: Request started: POST /api/v1/leads/7/analyze
+2026-02-22 02:06:17,528 [INFO] app.core.middleware: Request completed: POST /api/v1/leads/7/analyze - 200
+INFO:     127.0.0.1:57314 - "POST /api/v1/leads/7/analyze HTTP/1.1" 200 OK
+2026-02-22 02:06:21,370 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:06:21,377 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57320 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:06:21,397 [INFO] app.core.middleware: Request started: POST /api/v1/leads/7/analyze
+2026-02-22 02:06:21,414 [INFO] app.core.middleware: Request completed: POST /api/v1/leads/7/analyze - 200
+INFO:     127.0.0.1:57322 - "POST /api/v1/leads/7/analyze HTTP/1.1" 200 OK
+2026-02-22 02:06:34,537 [INFO] app.core.middleware: Request started: PATCH /api/v1/leads/4/stage
+2026-02-22 02:06:34,541 [INFO] app.core.middleware: Request completed: PATCH /api/v1/leads/4/stage - 422
+INFO:     127.0.0.1:57329 - "PATCH /api/v1/leads/4/stage HTTP/1.1" 422 Unprocessable Entity
+2026-02-22 02:06:34,552 [INFO] app.core.middleware: Request started: PATCH /api/v1/leads/4/stage
+2026-02-22 02:06:34,579 [INFO] app.core.middleware: Request completed: PATCH /api/v1/leads/4/stage - 400
+INFO:     127.0.0.1:57331 - "PATCH /api/v1/leads/4/stage HTTP/1.1" 400 Bad Request
+2026-02-22 02:06:41,340 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:06:41,364 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57334 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:06:41,389 [INFO] app.core.middleware: Request started: GET /api/v1/leads/7
+2026-02-22 02:06:41,403 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/7 - 200
+INFO:     127.0.0.1:57336 - "GET /api/v1/leads/7 HTTP/1.1" 200 OK
+2026-02-22 02:06:51,706 [INFO] app.core.middleware: Request started: GET /api/v1/users/me
+2026-02-22 02:06:51,775 [INFO] app.core.middleware: Request completed: GET /api/v1/users/me - 404
+INFO:     127.0.0.1:57342 - "GET /api/v1/users/me?telegram_id=585761464 HTTP/1.1" 404 Not Found
+2026-02-22 02:06:51,791 [INFO] app.core.middleware: Request started: GET /api/v1/leads/7
+2026-02-22 02:06:51,796 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/7 - 200
+INFO:     127.0.0.1:57344 - "GET /api/v1/leads/7 HTTP/1.1" 200 OK

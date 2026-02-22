@@ -40,11 +40,18 @@ async def get_ai_service() -> AIService:
     return AIService()
 
 
+from app.repositories.history_repo import HistoryRepository
+
+async def get_history_repo(db: DbSession) -> HistoryRepository:
+    """Get HistoryRepository instance."""
+    return HistoryRepository(db)
+
 async def get_lead_service(
-    lead_repo: Annotated[LeadRepository, Depends(get_lead_repo)]
+    lead_repo: Annotated[LeadRepository, Depends(get_lead_repo)],
+    history_repo: Annotated[HistoryRepository, Depends(get_history_repo)]
 ) -> LeadService:
     """Get LeadService instance."""
-    return LeadService(lead_repo)
+    return LeadService(lead_repo, history_repo)
 
 
 async def get_transfer_service(

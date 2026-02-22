@@ -15,10 +15,12 @@ from datetime import datetime, UTC
 from app.core.config import settings
 from app.models.lead import Lead, ColdStage
 from app.models.sale import Sale, SaleStage, SALE_STAGE_ORDER, TERMINAL_SALE_STAGES
+from app.models.history import SaleHistory
 from app.repositories.lead_repo import LeadRepository
 from app.repositories.sale_repo import SaleRepository
 from app.ai.ai_service import AIService
 from app.schemas.lead import AIAnalysisResult
+from app.api.v1.ws import manager as ws_manager
 
 
 class TransferError(Exception):
@@ -43,7 +45,7 @@ class TransferService:
         Does NOT change lead stage or create sale.
         Manager sees the recommendation and decides what to do.
         """
-        result = await self.ai_service.analyze_lead(lead)
+        result = await self.ai_service.analyze_lead(lead, db=self.lead_repo.db)
         # Persist for auditability
         lead.ai_score = result.score
         lead.ai_recommendation = result.recommendation
@@ -63,12 +65,16 @@ class TransferService:
 
         These rules are explicit and auditable.
         """
-        # Gate 1: Stage check
+        # Gate 1: Stage check — ONLY QUALIFIED leads can be transferred
         if lead.stage == ColdStage.TRANSFERRED:
             raise TransferError("Lead is already transferred to sales.")
 
-        if lead.stage not in (ColdStage.QUALIFIED, ColdStage.CONTACTED, ColdStage.NEW):
-            raise TransferError(f"Lead in stage '{lead.stage.value}' cannot be transferred.")
+        if lead.stage != ColdStage.QUALIFIED:
+            raise TransferError(
+                f"Lead must be in QUALIFIED stage before transfer. "
+                f"Current stage: '{lead.stage.value}'. "
+                f"Complete cold qualification pipeline first."
+            )
 
         # Gate 2: AI score check — we require a fresh analysis to exist
         if lead.ai_score is None:
@@ -94,11 +100,20 @@ class TransferService:
         sale = Sale(lead_id=lead.id, stage=SaleStage.NEW, amount=amount)
         sale = await self.sale_repo.create(sale)
 
+        # Broadcast update (Step 8.2)
+        await ws_manager.broadcast({"type": "SALE_CREATED", "id": sale.id, "lead_id": lead.id, "stage": sale.stage.value})
+
         return lead, sale
 
-    async def advance_sale_stage(self, sale: Sale, new_stage: SaleStage) -> Sale:
+    async def advance_sale_stage(
+        self, 
+        sale: Sale, 
+        new_stage: SaleStage, 
+        amount: int | None = None,
+        changed_by: str = "System"
+    ) -> Sale:
         """
-        Move sale through its own pipeline with same sequential rules.
+        Move sale through its own pipeline with sequential rules and auditing.
         """
         current = sale.stage
 
@@ -121,5 +136,49 @@ class TransferService:
                 f"Expected next stage: '{SALE_STAGE_ORDER[current_idx + 1].value}'."
             )
 
+        # Log history
+        history = SaleHistory(
+            sale_id=sale.id,
+            old_stage=current.value,
+            new_stage=new_stage.value,
+            changed_by=changed_by,
+            reason=f"Transitioned to {new_stage.value}"
+        )
+        
+        self.sale_repo.db.add(history)
         sale.stage = new_stage
-        return await self.sale_repo.save(sale)
+        
+        # Optional amount update (e.g. when moving to PAID)
+        if amount is not None:
+            sale.amount = amount
+            
+        # Notification for PAID deals
+        if new_stage == SaleStage.PAID:
+            try:
+                from app.services.notification_service import NotificationService
+                notif_svc = NotificationService()
+                
+                # Fetch lead info for the notification
+                lead_name = sale.lead.full_name if (sale.lead and sale.lead.full_name) else f"#{sale.lead_id}"
+                amount_str = f"${sale.amount / 100:.2f}" if sale.amount else "Unknown"
+                
+                alert_text = (
+                    f"💰 <b>REVENUE ALERT: DEAL CLOSED!</b>\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"Sale #{sale.id} has been marked as <b>PAID</b>!\n\n"
+                    f"👤 <b>Client:</b> {lead_name}\n"
+                    f"💵 <b>Amount:</b> {amount_str}\n"
+                    f"👤 <b>Manager:</b> {changed_by}\n"
+                )
+                await notif_svc.notify_admins(alert_text)
+                await notif_svc.close()
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Failed to send deal closure alert: {e}")
+
+        sale = await self.sale_repo.save(sale)
+        
+        # Broadcast update (Step 8.2)
+        await ws_manager.broadcast({"type": "SALE_UPDATED", "id": sale.id, "stage": sale.stage.value})
+        
+        return sale
