@@ -122,10 +122,12 @@ class AIService:
             created = created.replace(tzinfo=timezone.utc)
         days_since_created = max((datetime.now(timezone.utc) - created).days, 1)
 
-        # Engineered features
+        # Engineered features (compatible with current Lead model)
         message_velocity = round((lead.message_count or 0) / days_since_created, 3)
-        contact_completeness = bool(lead.email and lead.phone)
-        b2b_qualification = bool(getattr(lead, "company", None) and getattr(lead, "position", None))
+        # Legacy fields (email/phone/company/position/intent/budget/pain_points)
+        # are intentionally absent in the current Lead model.
+        contact_completeness = False
+        b2b_qualification = False
 
         return {
             "source": lead.source.value,
@@ -137,9 +139,9 @@ class AIService:
             "days_since_created": days_since_created,
             "contact_completeness": contact_completeness,
             "b2b_qualification": b2b_qualification,
-            "intent": lead.intent,
-            "budget": lead.budget,
-            "pain_points": lead.pain_points,
+            "intent": None,
+            "budget": None,
+            "pain_points": None,
         }
 
     async def warm_up(self) -> bool:

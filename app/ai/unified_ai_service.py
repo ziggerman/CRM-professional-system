@@ -9,6 +9,7 @@ import logging
 from typing import Optional
 
 import httpx
+from app.ai.voice_ai_manager import voice_ai, Intent, IntentDetector
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ class UnifiedAIService:
     """
     Unified AI Service that handles:
     - Voice transcription (local or API - FREE & paid options)
-    - Text command understanding
+    - Text command understanding with CONTEXT AWARENESS
     - Lead queries
     - Note categorization
     
@@ -33,6 +34,12 @@ class UnifiedAIService:
     1. Local faster-whisper (FREE, offline, fastest)
     2. HuggingFace API (FREE, online)
     3. OpenAI Whisper (paid, reliable)
+    
+    Context features:
+    - Remembers last mentioned lead ID
+    - Tracks conversation state
+    - Supports pronouns ("того", "його", "that lead")
+    - Allows follow-up without repeating ID
     """
     
     # Class-level model cache
@@ -44,6 +51,39 @@ class UnifiedAIService:
         self.huggingface_token = os.getenv("HUGGINGFACE_TOKEN")
         self.local_whisper_model = os.getenv("LOCAL_WHISPER_MODEL", "base")  # tiny, base, small
         self.api_base_url = "http://localhost:8000"
+        
+        # Context tracking per user (in production, use Redis or DB)
+        self._user_context: dict[int, dict] = {}
+    
+    def get_user_context(self, user_id: int) -> dict:
+        """Get context for user from unified VoiceAIManager."""
+        ctx = voice_ai.get_context(user_id)
+        return {
+            "last_lead_id": ctx.last_lead_id,
+            "last_lead_name": ctx.last_lead_name,
+            "last_action": ctx.last_action,
+            "conversation_history": ctx.conversation_history,
+        }
+    
+    def update_context(self, user_id: int, lead_id: int = None, lead_name: str = None, action: str = None):
+        """Update user context in VoiceAIManager."""
+        if lead_id:
+            voice_ai.update_context_lead(user_id, lead_id, lead_name)
+        if action:
+            ctx = voice_ai.get_context(user_id)
+            ctx.last_action = action
+    
+    def clear_context(self, user_id: int):
+        """Clear user context."""
+        voice_ai._user_contexts.pop(user_id, None)
+    
+    def resolve_pronoun(self, text: str, user_id: int):
+        """Resolve pronouns using VoiceAIManager context resolver."""
+        return voice_ai.resolve_pronoun(text, user_id)
+
+    def assess_transcription_quality(self, text: str) -> dict:
+        """Expose voice transcription quality assessment from VoiceAIManager."""
+        return voice_ai.assess_transcription_quality(text)
     
     # ==================== VOICE PROCESSING ====================
     
@@ -182,144 +222,43 @@ class UnifiedAIService:
     
     # ==================== COMMAND PARSING ====================
     
-    def parse_command(self, text: str) -> dict:
-        """Parse natural language text into structured command."""
-        text_lower = text.lower()
-        
-        result = {
-            "action": None,
-            "query": None,
-            "lead_data": {},
-            "confidence": 0.5,
-            "raw_text": text
+    def parse_command(self, text: str, user_id: int = None) -> dict:
+        """Parse command through VoiceAIManager to keep one NLU source of truth."""
+        ctx = voice_ai.get_context(user_id) if user_id else None
+        action = IntentDetector.detect(text, ctx)
+
+        action_map = {
+            Intent.CREATE_LEAD: "create",
+            Intent.LIST_LEADS: "list",
+            Intent.SHOW_NOTES: "notes",
+            Intent.ADD_NOTE: "note",
+            Intent.STATS: "stats",
+            Intent.SEARCH: "search",
+            Intent.SALES: "sales",
+            Intent.ANALYZE_LEAD: "analyze",
+            Intent.EDIT_LEAD: "edit",
+            Intent.DELETE_LEAD: "delete",
+            Intent.UNKNOWN: "ai_query",
         }
-        
-        # CREATE LEAD commands
-        create_patterns = [
-            "додай ліда", "додай новий ліда", "додай нового ліда",
-            "створи ліда", "новий ліда", "створи нового ліда",
-            "add lead", "create lead", "new lead", "add new lead"
-        ]
-        
-        if any(p in text_lower for p in create_patterns):
-            result["action"] = "create"
-            result["lead_data"] = self._parse_lead_data(text)
-            result["confidence"] = 0.9
-            return result
-        
-        # SHOW LEADS / LIST commands
-        list_patterns = [
-            "покажи ліди", "покажи всіх лідів", "список лідів",
-            "show leads", "show all leads", "list leads", "мої ліди"
-        ]
-        
-        if any(p in text_lower for p in list_patterns):
-            result["action"] = "list"
-            result["confidence"] = 0.9
-            return result
-        
-        # NOTES commands
-        show_notes_patterns = [
-            "покажи нотатки", "покажи замечания", "show notes", 
-            "мої нотатки", "нотатки ліда"
-        ]
-        
-        if any(p in text_lower for p in show_notes_patterns):
-            result["action"] = "notes"
-            result["confidence"] = 0.9
-            return result
-        
-        # ADD NOTE commands
-        note_patterns = [
-            "додай нотатку", "додай замітку", "додай note",
-            "запиши нотатку", "create note", "add note"
-        ]
-        
-        if any(p in text_lower for p in note_patterns):
-            lead_id = self._extract_lead_id(text)
-            result["action"] = "note"
-            result["lead_data"] = {"lead_id": lead_id, "content": text}
-            result["confidence"] = 0.8
-            return result
-        
-        # STATS commands
-        stats_patterns = [
-            "статистика", "звіти", "stats", "show stats",
-            "дашборд", "dashboard", "покажи статистику"
-        ]
-        
-        if any(p in text_lower for p in stats_patterns):
-            result["action"] = "stats"
-            result["confidence"] = 0.9
-            return result
-        
-        # EDIT LEAD commands
-        edit_patterns = [
-            "редагуй ліда", "зміни ліда", "edit lead", "change lead",
-            "онов ліда", "редагуй #", "зміни #"
-        ]
-        
-        if any(p in text_lower for p in edit_patterns):
-            lead_id = self._extract_lead_id(text)
-            result["action"] = "edit"
-            result["lead_data"] = {"lead_id": lead_id}
-            result["confidence"] = 0.8
-            return result
-        
-        # DELETE LEAD commands
-        delete_patterns = [
-            "видали ліда", "видалити ліда", "delete lead", "remove lead"
-        ]
-        
-        if any(p in text_lower for p in delete_patterns):
-            lead_id = self._extract_lead_id(text)
-            result["action"] = "delete"
-            result["lead_data"] = {"lead_id": lead_id}
-            result["confidence"] = 0.8
-            return result
-        
-        # SALES commands
-        sales_patterns = [
-            "продажі", "sales", "pipeline", "воронка",
-            "покажи продажі", "show sales"
-        ]
-        
-        if any(p in text_lower for p in sales_patterns):
-            result["action"] = "sales"
-            result["confidence"] = 0.9
-            return result
-        
-        # Search queries
-        search_patterns = ["знайди", "пошук", "search", "find", "шукай"]
-        
-        if any(p in text_lower for p in search_patterns):
-            query = text
-            for word in ["знайди", "пошук", "search", "find", "шукай"]:
-                query = query.replace(word, "", 1).strip()
-            if query and len(query) > 1:
-                result["action"] = "search"
-                result["query"] = query
-                result["confidence"] = 0.7
-                return result
-        
-        # Analysis queries
-        analysis_patterns = [
-            "хто найкращ", "хто найгаряч", "best lead", "hot lead",
-            "аналіз", "analyze", "оціни", "score"
-        ]
-        
-        if any(p in text_lower for p in analysis_patterns):
-            result["action"] = "analyze"
-            result["query"] = text
-            result["confidence"] = 0.6
-            return result
-        
-        # Unknown - use as AI query
-        result["action"] = "ai_query"
-        result["query"] = text
-        result["confidence"] = 0.4
-        
-        return result
+
+        lead_data = {
+            "lead_id": action.entities.lead_id,
+            "name": action.entities.lead_name,
+            "phone": action.entities.phone,
+            "email": action.entities.email,
+            "source": action.entities.source,
+            "domain": action.entities.domain,
+            "content": action.entities.note_content,
+        }
+        lead_data = {k: v for k, v in lead_data.items() if v is not None}
+
+        return {
+            "action": action_map.get(action.intent, "ai_query"),
+            "query": action.entities.search_query or text,
+            "lead_data": lead_data,
+            "confidence": action.confidence,
+            "raw_text": text,
+        }
     
     def _extract_lead_id(self, text: str) -> int | None:
         """Extract lead ID from text."""

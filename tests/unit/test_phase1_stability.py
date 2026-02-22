@@ -207,14 +207,70 @@ class TestStageMachine:
             await svc.transition_stage(lead, ColdStage.NEW)
 
     @pytest.mark.asyncio
-    async def test_any_nonterminal_to_lost_ok(self):
+    async def test_any_nonterminal_to_lost_requires_reason(self):
         from app.models.lead import ColdStage
+        from app.services.lead_service import LeadStageError
         svc = self._make_service()
 
         for stage in [ColdStage.NEW, ColdStage.CONTACTED, ColdStage.QUALIFIED]:
             lead = self._make_lead(stage)
-            await svc.transition_stage(lead, ColdStage.LOST)
+            with pytest.raises(LeadStageError, match="lost_reason is required"):
+                await svc.transition_stage(lead, ColdStage.LOST)
+
+    @pytest.mark.asyncio
+    async def test_any_nonterminal_to_lost_ok_with_reason(self):
+        from app.models.lead import ColdStage, LostReason
+        svc = self._make_service()
+
+        for stage in [ColdStage.NEW, ColdStage.CONTACTED, ColdStage.QUALIFIED]:
+            lead = self._make_lead(stage)
+            await svc.transition_stage(lead, ColdStage.LOST, lost_reason=LostReason.NO_RESPONSE)
             assert lead.stage == ColdStage.LOST
+
+
+class TestSaleStageValidation:
+    """Sale stage progression rules requiring amount before PAID."""
+
+    def _make_sale(self, stage, amount=None):
+        from app.models.sale import Sale
+        sale = MagicMock(spec=Sale)
+        sale.id = 10
+        sale.stage = stage
+        sale.amount = amount
+        sale.lead_id = 1
+        sale.lead = None
+        return sale
+
+    def _make_transfer_service(self):
+        from app.services.transfer_service import TransferService
+        svc = TransferService.__new__(TransferService)
+        svc.sale_repo = MagicMock()
+        svc.sale_repo.db = MagicMock()
+        svc.sale_repo.db.add = MagicMock()
+        svc.sale_repo.save = AsyncMock(side_effect=lambda x: x)
+        return svc
+
+    @pytest.mark.asyncio
+    async def test_paid_requires_amount(self):
+        from app.models.sale import SaleStage
+        from app.services.transfer_service import TransferError
+
+        svc = self._make_transfer_service()
+        sale = self._make_sale(SaleStage.AGREEMENT, amount=None)
+
+        with pytest.raises(TransferError, match="amount is required"):
+            await svc.advance_sale_stage(sale, SaleStage.PAID)
+
+    @pytest.mark.asyncio
+    async def test_paid_with_amount_ok(self):
+        from app.models.sale import SaleStage
+
+        svc = self._make_transfer_service()
+        sale = self._make_sale(SaleStage.AGREEMENT, amount=None)
+
+        updated = await svc.advance_sale_stage(sale, SaleStage.PAID, amount=5000)
+        assert updated.stage == SaleStage.PAID
+        assert updated.amount == 5000
 
 
 # ──────────────────────────────────────────────
@@ -230,20 +286,12 @@ class TestDuplicateLeadDetection:
         from app.schemas.lead import LeadCreate
         from app.models.lead import LeadSource
 
-        # Mock DB returning existing row
-        existing_row = MagicMock()
-        existing_row.id = 42
-        existing_row.email = "test@example.com"
-        existing_row.phone = None
-
-        mock_result = MagicMock()
-        mock_result.first = MagicMock(return_value=existing_row)
-
-        mock_session = AsyncMock()
-        mock_session.execute = AsyncMock(return_value=mock_result)
-
         repo = MagicMock()
-        repo.db = mock_session
+        mock_exec_result = MagicMock()
+        mock_exec_result.scalar_one_or_none = MagicMock(return_value=None)
+        repo.db = AsyncMock()
+        repo.db.execute = AsyncMock(return_value=mock_exec_result)
+        repo.create = AsyncMock(side_effect=DuplicateLeadError(existing_id=42, field="email"))
 
         svc = LeadService(repo, MagicMock())
 
@@ -266,3 +314,41 @@ class TestDuplicateLeadDetection:
 
         assert exc_info.value.existing_id == 42
         assert exc_info.value.field == "email"
+
+
+class TestLeadAutoAssignment:
+    """Lead creation should auto-assign manager via round-robin when available."""
+
+    @pytest.mark.asyncio
+    async def test_create_lead_auto_assigns_manager(self):
+        from app.services.lead_service import LeadService
+        from app.schemas.lead import LeadCreate
+        from app.models.lead import LeadSource
+
+        mock_manager = MagicMock()
+        mock_manager.id = 7
+        mock_manager.current_leads = 3
+        mock_manager.last_lead_assigned_at = None
+
+        mock_exec_result = MagicMock()
+        mock_exec_result.scalar_one_or_none = MagicMock(return_value=mock_manager)
+
+        repo = MagicMock()
+        repo.db = AsyncMock()
+        repo.db.execute = AsyncMock(return_value=mock_exec_result)
+
+        created_lead = MagicMock()
+        created_lead.id = 100
+        created_lead.stage = MagicMock()
+        created_lead.stage.value = "NEW"
+        created_lead.assigned_to_id = 7
+        repo.create = AsyncMock(return_value=created_lead)
+
+        svc = LeadService(repo, MagicMock())
+
+        data = LeadCreate(source=LeadSource.MANUAL, business_domain=None, telegram_id="123")
+        lead = await svc.create_lead(data)
+
+        assert lead.assigned_to_id == 7
+        assert mock_manager.current_leads == 4
+        assert repo.create.await_count == 1

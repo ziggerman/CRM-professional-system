@@ -3,11 +3,13 @@ Sale Repository - Data Access Layer for Sale model.
 """
 from datetime import datetime, UTC
 from typing import Optional
-from sqlalchemy import select
+from sqlalchemy import select, func, case
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.sale import Sale, SaleStage
+from app.models.lead import Lead
+from app.models.user import User
 
 
 class SaleRepository:
@@ -81,3 +83,84 @@ class SaleRepository:
         """Delete a sale."""
         await self.db.delete(sale)
         await self.db.flush()
+
+    async def get_sales_analytics(self) -> dict:
+        """Aggregate sales analytics without loading all rows into memory."""
+        stage_cases = {
+            "new": func.sum(case((Sale.stage == SaleStage.NEW, 1), else_=0)),
+            "kyc": func.sum(case((Sale.stage == SaleStage.KYC, 1), else_=0)),
+            "agreement": func.sum(case((Sale.stage == SaleStage.AGREEMENT, 1), else_=0)),
+            "paid": func.sum(case((Sale.stage == SaleStage.PAID, 1), else_=0)),
+            "lost": func.sum(case((Sale.stage == SaleStage.LOST, 1), else_=0)),
+        }
+
+        amount_cases = {
+            "agreement_value": func.sum(case((Sale.stage == SaleStage.AGREEMENT, func.coalesce(Sale.amount, 0)), else_=0)),
+            "kyc_value": func.sum(case((Sale.stage == SaleStage.KYC, func.coalesce(Sale.amount, 0)), else_=0)),
+            "paid_revenue": func.sum(case((Sale.stage == SaleStage.PAID, func.coalesce(Sale.amount, 0)), else_=0)),
+        }
+
+        totals_stmt = select(
+            func.count(Sale.id),
+            *stage_cases.values(),
+            *amount_cases.values(),
+        )
+        totals_row = (await self.db.execute(totals_stmt)).one()
+
+        total_sales = totals_row[0] or 0
+        stage_counts = {
+            "new": totals_row[1] or 0,
+            "kyc": totals_row[2] or 0,
+            "agreement": totals_row[3] or 0,
+            "paid": totals_row[4] or 0,
+            "lost": totals_row[5] or 0,
+        }
+        agreement_value = totals_row[6] or 0
+        kyc_value = totals_row[7] or 0
+        paid_revenue = totals_row[8] or 0
+
+        paid_conversion_rate = round((stage_counts["paid"] / total_sales * 100.0), 2) if total_sales else 0.0
+        weighted_forecast = round((agreement_value * 0.6) + (kyc_value * 0.3), 2)
+
+        top_stmt = (
+            select(
+                User.id,
+                User.full_name,
+                func.count(Sale.id).label("paid_deals"),
+                func.coalesce(func.sum(Sale.amount), 0).label("paid_revenue"),
+            )
+            .join(Lead, Lead.assigned_to_id == User.id)
+            .join(Sale, Sale.lead_id == Lead.id)
+            .where(Sale.stage == SaleStage.PAID)
+            .group_by(User.id, User.full_name)
+            .order_by(func.count(Sale.id).desc(), func.coalesce(func.sum(Sale.amount), 0).desc())
+            .limit(5)
+        )
+        top_rows = (await self.db.execute(top_stmt)).all()
+
+        return {
+            "total_sales": total_sales,
+            "paid_sales": stage_counts["paid"],
+            "lost_sales": stage_counts["lost"],
+            "paid_conversion_rate": paid_conversion_rate,
+            "total_revenue": paid_revenue,
+            "agreement_pipeline_value": agreement_value,
+            "kyc_pipeline_value": kyc_value,
+            "weighted_forecast_revenue": weighted_forecast,
+            "funnel": [
+                {"stage": SaleStage.NEW, "count": stage_counts["new"]},
+                {"stage": SaleStage.KYC, "count": stage_counts["kyc"]},
+                {"stage": SaleStage.AGREEMENT, "count": stage_counts["agreement"]},
+                {"stage": SaleStage.PAID, "count": stage_counts["paid"]},
+                {"stage": SaleStage.LOST, "count": stage_counts["lost"]},
+            ],
+            "top_managers": [
+                {
+                    "manager_id": row[0],
+                    "manager_name": row[1],
+                    "paid_deals": row[2] or 0,
+                    "paid_revenue": row[3] or 0,
+                }
+                for row in top_rows
+            ],
+        }

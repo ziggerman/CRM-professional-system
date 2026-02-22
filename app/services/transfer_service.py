@@ -136,6 +136,14 @@ class TransferService:
                 f"Expected next stage: '{SALE_STAGE_ORDER[current_idx + 1].value}'."
             )
 
+        # Professional validation: PAID stage requires explicit amount
+        if new_stage == SaleStage.PAID:
+            effective_amount = amount if amount is not None else sale.amount
+            if effective_amount is None or effective_amount <= 0:
+                raise TransferError(
+                    "Sale amount is required and must be > 0 before moving to PAID stage."
+                )
+
         # Log history
         history = SaleHistory(
             sale_id=sale.id,

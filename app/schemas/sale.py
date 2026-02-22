@@ -24,6 +24,7 @@ class SaleCreate(BaseModel):
 class SaleStageUpdate(BaseModel):
     """Schema for updating sale stage."""
     stage: SaleStage
+    amount: Optional[int] = Field(None, ge=0)
 
 
 class SaleUpdate(BaseModel):
@@ -57,3 +58,28 @@ class SaleListResponse(BaseModel):
     page_size: int = Field(default=50, description="Items per page")
     has_next: bool = Field(default=False, description="Whether there are more pages")
     has_prev: bool = Field(default=False, description="Whether there are previous pages")
+
+
+class SalesFunnelItem(BaseModel):
+    stage: SaleStage
+    count: int
+
+
+class TopSalesManager(BaseModel):
+    manager_id: int
+    manager_name: str
+    paid_deals: int
+    paid_revenue: int
+
+
+class SalesAnalyticsResponse(BaseModel):
+    total_sales: int
+    paid_sales: int
+    lost_sales: int
+    paid_conversion_rate: float
+    total_revenue: int
+    agreement_pipeline_value: int
+    kyc_pipeline_value: int
+    weighted_forecast_revenue: float
+    funnel: list[SalesFunnelItem]
+    top_managers: list[TopSalesManager]

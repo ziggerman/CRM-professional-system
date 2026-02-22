@@ -3,6 +3,7 @@ import logging
 import sys
 import os
 from pathlib import Path
+import fcntl
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -13,6 +14,7 @@ load_dotenv(env_path)
 
 from app.bot.config import bot_settings
 from app.bot.handlers import router as handlers_router
+from app.bot.middleware import setup_middleware
 
 # Setup logging
 logging.basicConfig(
@@ -24,8 +26,29 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+_lock_file = None
+
+
+def acquire_single_instance_lock() -> bool:
+    """Prevent multiple polling instances (fixes TelegramConflictError)."""
+    global _lock_file
+    lock_path = Path(__file__).parent / ".run_bot.lock"
+
+    _lock_file = open(lock_path, "w")
+    try:
+        fcntl.flock(_lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        _lock_file.write(str(os.getpid()))
+        _lock_file.flush()
+        return True
+    except BlockingIOError:
+        return False
+
 async def main():
     """Start the bot in polling mode."""
+    if not acquire_single_instance_lock():
+        logger.error("Another run_bot.py instance is already running. Exiting to avoid TelegramConflictError.")
+        return
+
     if not bot_settings.TELEGRAM_BOT_TOKEN:
         logger.error("TELEGRAM_BOT_TOKEN not found in environment")
         return
@@ -37,6 +60,9 @@ async def main():
     )
     dp = Dispatcher()
     dp.include_router(handlers_router)
+
+    # Setup middleware (FSM timeout, user activity tracking)
+    setup_middleware(dp)
 
     logger.info("Starting Bot in POLLING mode...")
     

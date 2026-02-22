@@ -22,7 +22,7 @@ def get_main_menu_keyboard() -> ReplyKeyboardMarkup:
     builder.add(KeyboardButton(text="🎤 Voice"))
     builder.add(KeyboardButton(text="🤖 AI Assist"))
     builder.add(KeyboardButton(text="⚙️ Settings"))
-    builder.adjust(2, 2, 2, 1)
+    builder.adjust(2, 2, 3)
     return builder.as_markup(resize_keyboard=True, is_persistent=True)
 
 
@@ -98,7 +98,7 @@ def get_stage_subcategories_keyboard() -> InlineKeyboardMarkup:
     for stage, meta in STAGE_META.items():
         builder.add(InlineKeyboardButton(
             text=f"{meta['emoji']} {meta['label']}",
-            callback_data=f"filter_{stage}"
+            callback_data=f"filter_{stage.lower()}"
         ))
     builder.add(InlineKeyboardButton(text="‹ Back", callback_data="goto_leads"))
     builder.adjust(1, 1, 1, 1, 1, 1)
@@ -110,7 +110,7 @@ def get_source_subcategories_keyboard() -> InlineKeyboardMarkup:
     for source, meta in SOURCE_META.items():
         builder.add(InlineKeyboardButton(
             text=f"{meta['emoji']} {meta['label']}",
-            callback_data=f"filter_{source}"
+            callback_data=f"filter_{source.lower()}"
         ))
     builder.add(InlineKeyboardButton(text="‹ Back", callback_data="goto_leads"))
     builder.adjust(1, 1, 1, 1)
@@ -122,7 +122,7 @@ def get_domain_subcategories_keyboard() -> InlineKeyboardMarkup:
     for domain, meta in DOMAIN_META.items():
         builder.add(InlineKeyboardButton(
             text=f"{meta['emoji']} {meta['label']}",
-            callback_data=f"filter_{domain}"
+            callback_data=f"filter_{domain.lower()}"
         ))
     builder.add(InlineKeyboardButton(text="‹ Back", callback_data="goto_leads"))
     builder.adjust(1, 1, 1, 1)

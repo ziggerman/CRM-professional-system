@@ -17,17 +17,11 @@ def rule_based_score(lead: Lead) -> dict:
     reasons: list[str] = []
 
     # ── Source weight ─────────────────────────────
+    # Keep synchronized with current LeadSource enum (SCANNER/PARTNER/MANUAL)
     source_weights = {
-        LeadSource.REFERRAL: 0.35,
         LeadSource.PARTNER: 0.30,
-        LeadSource.REGISTRATION: 0.28,
-        LeadSource.WEB: 0.25,
-        LeadSource.CALLBACK: 0.22,
-        LeadSource.LEAD_MAGNET: 0.20,
         LeadSource.SCANNER: 0.20,
-        LeadSource.SOCIAL: 0.15,
         LeadSource.MANUAL: 0.10,
-        LeadSource.MESSAGE: 0.08,
     }
     src_w = source_weights.get(lead.source, 0.10)
     score += src_w
@@ -46,10 +40,12 @@ def rule_based_score(lead: Lead) -> dict:
         reasons.append("low-activity")
 
     # ── Contact completeness ──────────────────────
-    if lead.email and lead.phone:
+    email = getattr(lead, "email", None)
+    phone = getattr(lead, "phone", None)
+    if email and phone:
         score += 0.15
         reasons.append("full-contact")
-    elif lead.email or lead.phone:
+    elif email or phone:
         score += 0.07
         reasons.append("partial-contact")
 

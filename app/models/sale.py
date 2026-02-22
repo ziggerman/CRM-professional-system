@@ -41,7 +41,8 @@ class Sale(Base):
         Integer, 
         ForeignKey("leads.id", ondelete="CASCADE"), 
         nullable=False,
-        unique=True
+        unique=True,
+        index=True
     )
     
     stage: Mapped[SaleStage] = mapped_column(
