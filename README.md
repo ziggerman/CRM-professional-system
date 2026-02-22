@@ -48,10 +48,10 @@ The Telegram bot supports **voice commands** for hands-free operation:
 ### Commands in Voice Mode
 | Command | Action |
 |---------|--------|
-| "додай ліда" | Create new lead |
-| "покажи ліди" | Show leads list |
-| "статистика" | Show statistics |
-| "знайди [ім'я]" | Search for lead |
+| "add lead" | Create new lead |
+| "show leads" | Show leads list |
+| "statistics" | Show statistics |
+| "find [name]" | Search for lead |
 | Voice message | Auto-transcribe & process |
 
 ### Voice Transcription Options

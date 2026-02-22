@@ -446,7 +446,7 @@ async def cmd_ai_assist(message: Message, state: FSMContext):
 @router.message(AIAssistantState.waiting_for_query)
 async def handle_ai_query(message: Message, state: FSMContext):
     """Handle AI Assistant queries."""
-    from app.ai.assistant import ai_assistant
+    from app.ai.unified_ai_service import unified_ai as ai_assistant
     
     query = message.text or ""
     if not query:
