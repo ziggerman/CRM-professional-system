@@ -8,7 +8,7 @@ async def test_create_lead(client: AsyncClient, auth_token: str):
     data = {
         "telegram_id": "999888777",
         "full_name": "Integration Test Lead",
-        "source": LeadSource.MESSAGE.value,
+        "source": LeadSource.MANUAL.value,
         "phone": "+1234567890",
         "email": "integration@test.com"
     }
@@ -37,7 +37,7 @@ async def test_bulk_update_stage(client: AsyncClient, auth_token: str):
     
     # 1. Create a lead
     create_resp = await client.post("/api/v1/leads", json={
-        "telegram_id": "111", "full_name": "L1", "source": "MESSAGE"
+        "telegram_id": "111", "full_name": "L1", "source": "MANUAL"
     }, headers=headers)
     lead_id = create_resp.json()["id"]
     
@@ -54,3 +54,29 @@ async def test_bulk_update_stage(client: AsyncClient, auth_token: str):
     get_resp = await client.get(f"/api/v1/leads/{lead_id}", headers=headers)
     assert get_resp.status_code == 200
     assert get_resp.json()["stage"] == ColdStage.CONTACTED.value
+
+
+@pytest.mark.asyncio
+async def test_sales_analytics_endpoint_shape(client: AsyncClient, auth_token: str):
+    """Sales analytics endpoint should return stable response contract."""
+    headers = {"Authorization": f"Bearer {auth_token}"}
+    response = await client.get("/api/v1/sales/analytics", headers=headers)
+    assert response.status_code == 200
+
+    data = response.json()
+    required_keys = {
+        "total_sales",
+        "paid_sales",
+        "lost_sales",
+        "paid_conversion_rate",
+        "total_revenue",
+        "agreement_pipeline_value",
+        "kyc_pipeline_value",
+        "weighted_forecast_revenue",
+        "funnel",
+        "top_managers",
+    }
+
+    assert required_keys.issubset(data.keys())
+    assert isinstance(data["funnel"], list)
+    assert isinstance(data["top_managers"], list)

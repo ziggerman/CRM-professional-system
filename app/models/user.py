@@ -40,6 +40,7 @@ class User(Base):
     # Assignment settings
     max_leads: int = mapped_column(Integer, default=50)
     current_leads: int = mapped_column(Integer, default=0)
+    last_lead_assigned_at: Optional[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     domains: Optional[str] = mapped_column(String(512), nullable=True)
     
     # Stats
@@ -54,7 +55,7 @@ class User(Base):
     )
     
     # Relationships
-    assigned_leads: list["Lead"] = relationship("Lead", back_populates="assigned_to")
+    leads: list["Lead"] = relationship("Lead", back_populates="assigned_to")
     
     def __repr__(self):
         return f"<User id={self.id} name={self.full_name} role={self.role.value}>"

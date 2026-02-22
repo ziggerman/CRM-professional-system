@@ -452,6 +452,23 @@ def format_notes_menu(lead_id: int, notes_count: int) -> str:
 def format_single_note(lead_id: int, note: dict, index: int, total: int) -> str:
     """Format one note for viewing."""
     author = note.get("author_name") or f"User {note.get('created_by')}" or "System"
+    note_type = (note.get("note_type") or note.get("category") or "general").lower()
+    is_pinned = bool(note.get("is_pinned", False))
+    type_meta = {
+        "general": ("📋", "General"),
+        "contact": ("📞", "Contact"),
+        "email": ("📧", "Email"),
+        "meeting": ("💼", "Meeting"),
+        "problem": ("⚠️", "Problem"),
+        "success": ("✅", "Success"),
+        "task": ("🧩", "Task"),
+        "objection": ("🛑", "Objection"),
+        "comment": ("💬", "Comment"),
+        "system": ("⚙️", "System"),
+        "ai": ("🤖", "AI"),
+    }
+    type_emoji, type_label = type_meta.get(note_type, ("📝", note_type.upper()))
+    pin_line = "📌 <b>Pinned:</b> Yes\n" if is_pinned else ""
     date_str = note.get("created_at", "")
     if date_str:
         try:
@@ -464,6 +481,8 @@ def format_single_note(lead_id: int, note: dict, index: int, total: int) -> str:
     return (
         f"👁 <b>VIEWING NOTE {index + 1}/{total}</b>\n"
         f"Lead: <b>#{lead_id}</b>\n"
+        f"Type: {type_emoji} <b>{type_label}</b>\n"
+        f"{pin_line}"
         f"Date: <i>{date_str}</i>\n"
         f"By: <b>{author}</b>\n\n"
         f"📝 <i>\"{note.get('content')}\"</i>"

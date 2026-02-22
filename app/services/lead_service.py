@@ -8,15 +8,22 @@ Rules enforced here (NOT in AI, NOT in API layer):
 """
 from datetime import datetime, UTC
 
-from app.models.lead import Lead, ColdStage, COLD_STAGE_ORDER, TERMINAL_COLD_STAGES, REVERSIBLE_STAGE_TRANSITIONS
+from app.models.lead import (
+    Lead,
+    ColdStage,
+    LostReason,
+    COLD_STAGE_ORDER,
+    TERMINAL_COLD_STAGES,
+    REVERSIBLE_STAGE_TRANSITIONS,
+    calculate_quality_tier,
+)
 from app.models.history import LeadHistory
 from app.repositories.lead_repo import LeadRepository
 from app.repositories.history_repo import HistoryRepository
+from app.repositories.user_repo import UserRepository
 from app.schemas.lead import LeadCreate, AIAnalysisResult, LeadAttachmentResponse
 from app.models.attachment import LeadAttachment
 from app.api.v1.ws import manager as ws_manager
-
-
 
 
 class LeadStageError(Exception):
@@ -43,44 +50,35 @@ class LeadService:
         self.history_repo = history_repo
 
     async def create_lead(self, data: LeadCreate) -> Lead:
-        # Step 1.7: Duplicate check by email and phone
-        if data.email or data.phone:
-            from sqlalchemy import select, or_
-            filters = []
-            if data.email:
-                filters.append(Lead.email == data.email)
-            if data.phone:
-                filters.append(Lead.phone == data.phone)
-            result = await self.repo.db.execute(
-                select(Lead.id, Lead.email, Lead.phone)
-                .where(or_(*filters))
-                .limit(1)
-            )
-            existing = result.first()
-            if existing:
-                field = "email" if (data.email and existing.email == data.email) else "phone"
-                raise DuplicateLeadError(existing_id=existing.id, field=field)
+        assigned_to_id = None
+
+        # Auto-assignment (round-robin by active manager load)
+        user_repo = UserRepository(self.repo.db)
+        preferred_domain = data.business_domain.value if data.business_domain else None
+        manager = await user_repo.get_round_robin_manager(preferred_domain)
+        if manager:
+            assigned_to_id = manager.id
+            manager.current_leads += 1
+            manager.last_lead_assigned_at = datetime.now(UTC)
+            await user_repo.save(manager)
 
         lead = Lead(
             source=data.source,
             business_domain=data.business_domain,
             telegram_id=data.telegram_id,
-            full_name=data.full_name,
-            email=data.email,
-            phone=data.phone,
-            external_username=data.external_username,
-            intent=data.intent,
-            company=data.company,
-            position=data.position,
-            budget=data.budget,
-            pain_points=data.pain_points,
             stage=ColdStage.NEW,
             message_count=0,
+            assigned_to_id=assigned_to_id,
         )
         lead = await self.repo.create(lead)
         
         # Broadcast update (Step 8.2)
-        await ws_manager.broadcast({"type": "LEAD_CREATED", "id": lead.id, "stage": lead.stage.value})
+        await ws_manager.broadcast({
+            "type": "LEAD_CREATED",
+            "id": lead.id,
+            "stage": lead.stage.value,
+            "assigned_to_id": lead.assigned_to_id,
+        })
         
         return lead
 
@@ -120,7 +118,11 @@ class LeadService:
         )
 
     async def transition_stage(
-        self, lead: Lead, new_stage: ColdStage, changed_by: str = "System"
+        self,
+        lead: Lead,
+        new_stage: ColdStage,
+        changed_by: str = "System",
+        lost_reason: LostReason | None = None,
     ) -> Lead:
         """
         Advance lead to next stage with strict validation.
@@ -147,18 +149,31 @@ class LeadService:
                 f"Expected next stage: '{COLD_STAGE_ORDER[current_idx + 1].value}'."
             )
 
+        # Business rule: LOST stage must always have structured reason
+        if new_stage == ColdStage.LOST and lost_reason is None:
+            raise LeadStageError("lost_reason is required when moving lead to LOST stage.")
+
+        if new_stage != ColdStage.LOST and lost_reason is not None:
+            raise LeadStageError("lost_reason can only be provided when moving to LOST stage.")
+
         # Log history before saving
+        history_reason = f"Transitioned to {new_stage.value}"
+        if new_stage == ColdStage.LOST and lost_reason is not None:
+            history_reason = f"Transitioned to LOST ({lost_reason.value})"
+
         history = LeadHistory(
             lead_id=lead.id,
             old_stage=current.value,
             new_stage=new_stage.value,
             changed_by=changed_by,
-            reason=f"Transitioned to {new_stage.value}"
+            reason=history_reason,
         )
         
         # Save both inside the same transaction
         self.repo.db.add(history)
         lead.stage = new_stage
+        if new_stage == ColdStage.LOST:
+            lead.lost_reason = lost_reason
         updated_lead = await self.repo.save(lead)
         await ws_manager.broadcast({"event": "lead_updated", "lead_id": lead.id, "stage": new_stage.value})
         return updated_lead
@@ -173,24 +188,6 @@ class LeadService:
             lead.source = data.source
         if data.business_domain is not None:
             lead.business_domain = data.business_domain
-        if data.full_name is not None:
-            lead.full_name = data.full_name
-        if data.email is not None:
-            lead.email = data.email
-        if data.phone is not None:
-            lead.phone = data.phone
-        if data.external_username is not None:
-            lead.external_username = data.external_username
-        if data.intent is not None:
-            lead.intent = data.intent
-        if data.company is not None:
-            lead.company = data.company
-        if data.position is not None:
-            lead.position = data.position
-        if data.budget is not None:
-            lead.budget = data.budget
-        if data.pain_points is not None:
-            lead.pain_points = data.pain_points
             
         return await self.repo.save(lead)
 
@@ -224,8 +221,6 @@ class LeadService:
         Only allowed for reversible transitions defined in REVERSIBLE_STAGE_TRANSITIONS.
         Requires a reason (min 10 characters).
         """
-        from app.models.lead import LeadStageError as LocalStageError
-        
         current = lead.stage
         
         # Check if current stage can be rolled back

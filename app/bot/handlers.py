@@ -60,6 +60,8 @@ from app.bot.keyboards import (
 from app.bot.states import LeadCreationState, LeadPasteState, AddNoteState, SearchState, SaleManagementState, AIAssistantState, VoiceChatState
 from app.bot import ui
 from app.bot.keyboards import get_paste_lead_keyboard, get_paste_confirm_keyboard
+from app.core.config import settings
+from app.ai.unified_ai_service import unified_ai as ai_assistant
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +69,42 @@ router = Router()
 bot: Optional[Bot] = None
 
 LEADS_PAGE_SIZE = 7  # Leads per page in list view
+
+NOTE_TYPE_EMOJIS = {
+    "general": "📋",
+    "contact": "📞",
+    "email": "📧",
+    "meeting": "💼",
+    "problem": "⚠️",
+    "success": "✅",
+    "task": "🧩",
+    "objection": "🛑",
+    "comment": "💬",
+    "system": "⚙️",
+    "ai": "🤖",
+}
+
+NOTE_TYPE_LABELS_UA = {
+    "general": "Загальне",
+    "contact": "Контакт",
+    "email": "Email",
+    "meeting": "Зустріч",
+    "problem": "Проблема",
+    "success": "Успіх",
+    "task": "Завдання",
+    "objection": "Заперечення",
+    "comment": "Коментар",
+    "system": "Системна",
+    "ai": "AI",
+}
+
+
+def _voice_quality_badge(score: float) -> str:
+    if score >= 0.75:
+        return "🟢"
+    if score >= 0.5:
+        return "🟡"
+    return "🔴"
 
 
 # ─────────────────────────────────────────────────────────────
@@ -326,6 +364,14 @@ async def show_leads_list_page(callback: CallbackQuery, leads: list, title: str,
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
+
+    # UX: remove raw /start command message where possible,
+    # so user doesn't see it as "hanging/unread" in chat.
+    try:
+        await message.delete()
+    except Exception:
+        pass
+
     user = message.from_user
     is_admin = user.id in bot_settings.TELEGRAM_ADMIN_IDS
 
@@ -390,6 +436,7 @@ async def cmd_sales(message: Message, state: FSMContext):
 
 @router.message(F.text == "📊 Stats")
 async def cmd_statistics(message: Message, state: FSMContext):
+    await state.clear()
     leads = await get_leads_via_api(user_id=message.from_user.id)
     await message.answer(
         ui.format_stats_simple(leads),
@@ -399,6 +446,7 @@ async def cmd_statistics(message: Message, state: FSMContext):
 
 @router.message(F.text == "➕ New Lead")
 async def cmd_new_lead(message: Message, state: FSMContext):
+    await state.clear()
     await state.set_state(LeadCreationState.waiting_for_source)
     await message.answer(
         "➕ <b>NEW LEAD</b>  <i>Step 1 of 2</i>\n\nSelect the lead source:",
@@ -428,16 +476,16 @@ async def cmd_voice(message: Message, state: FSMContext):
 
 @router.message(F.text == "🤖 AI Assist")
 async def cmd_ai_assist(message: Message, state: FSMContext):
+    await state.clear()
     await state.set_state(AIAssistantState.waiting_for_query)
     await message.answer(
-        "🤖 <b>AI Assistant (TEXT MODE)</b>\n\n"
-        "Ask me anything about your leads using TEXT:\n\n"
+        "🤖 <b>AI Assistant (TEXT + VOICE MODE)</b>\n\n"
+        "Ask me anything about your leads using text or voice:\n\n"
         "• <b>\"Show hot leads\"</b> - leads with AI score ≥ 0.6\n"
         "• <b>\"How many from scanner?\"</b> - count by source\n"
         "• <b>\"Who is the best candidate?\"</b> - top AI score\n"
         "• <b>\"Leads in qualified stage\"</b> - filter by stage\n\n"
-        "<i>Type your question below...</i>\n\n"
-        "<b>Note:</b> For VOICE queries, use 🎤 Voice mode instead!",
+        "<i>Type your question or send voice message below...</i>",
         reply_markup=get_back_to_menu_keyboard(),
         parse_mode="HTML"
     )
@@ -446,10 +494,12 @@ async def cmd_ai_assist(message: Message, state: FSMContext):
 @router.message(AIAssistantState.waiting_for_query)
 async def handle_ai_query(message: Message, state: FSMContext):
     """Handle AI Assistant queries."""
-    from app.ai.unified_ai_service import unified_ai as ai_assistant
-    
     query = message.text or ""
     if not query:
+        return
+
+    if ai_assistant is None:
+        await message.answer("⚠️ AI service unavailable right now. Please try again later.", parse_mode="HTML")
         return
     
     await message.answer("🤖 <i>Думаю...</i>", parse_mode="HTML")
@@ -461,6 +511,63 @@ async def handle_ai_query(message: Message, state: FSMContext):
     response = await ai_assistant.process_query(query, leads)
     
     await message.answer(response, parse_mode="HTML")
+
+
+@router.message(F.voice, AIAssistantState.waiting_for_query)
+async def handle_ai_voice_query(message: Message, state: FSMContext):
+    """Handle AI Assistant voice queries in AI mode."""
+    bot_instance = get_bot()
+    await message.answer("🎤 <i>Розпізнаю голосове питання...</i>", parse_mode="HTML")
+
+    if ai_assistant is None:
+        await message.answer("⚠️ AI service unavailable right now. Please try again later.", parse_mode="HTML")
+        return
+
+    try:
+        voice = message.voice
+        file = await bot_instance.get_file(voice.file_id)
+        voice_content = await bot_instance.download_file(file.file_path)
+
+        query_text = await ai_assistant.transcribe_voice(voice_content)
+        if not query_text:
+            await message.answer(
+                "⚠️ <b>Не вдалося розпізнати голос</b>\n\n"
+                "Спробуйте ще раз або надішліть запит текстом.",
+                parse_mode="HTML"
+            )
+            return
+
+        quality = ai_assistant.assess_transcription_quality(query_text)
+        badge = _voice_quality_badge(quality.get("score", 0.0))
+
+        await message.answer(
+            f"📝 <b>Розпізнано:</b> {query_text}\n"
+            f"{badge} <b>Якість:</b> {quality.get('label', 'UNKNOWN')} ({quality.get('score', 0.0):.0%})",
+            parse_mode="HTML"
+        )
+
+        if quality.get("needs_clarification"):
+            hints = quality.get("hints", [])
+            hint_text = "\n".join([f"• {h}" for h in hints]) if hints else "• Скажіть команду чіткіше"
+            await message.answer(
+                "⚠️ <b>Низька якість розпізнавання</b>\n\n"
+                "Щоб уникнути помилкових дій, повторіть голосове повідомлення.\n\n"
+                f"<b>Підказки:</b>\n{hint_text}",
+                parse_mode="HTML"
+            )
+            return
+        await message.answer("🤖 <i>Думаю...</i>", parse_mode="HTML")
+
+        leads = await get_leads_via_api(user_id=message.from_user.id)
+        response = await ai_assistant.process_query(query_text, leads)
+        await message.answer(response, parse_mode="HTML")
+    except Exception as e:
+        logger.error(f"AI voice query processing error: {e}")
+        await message.answer(
+            "⚠️ <b>Помилка обробки голосового запиту</b>\n\n"
+            "Спробуйте ще раз або напишіть запит текстом.",
+            parse_mode="HTML"
+        )
 
 
 @router.message(F.text == "⚡ Quick")
@@ -516,8 +623,9 @@ async def voice_confirm_create(callback: CallbackQuery, state: FSMContext):
             parse_mode="HTML"
         )
     else:
+        detail = lead.get("detail", "Невідома помилка") if isinstance(lead, dict) else "Невідома помилка"
         await callback.message.answer(
-            f"⚠️ <b>Помилка створення ліда</b>\n{lead.get('detail', 'Невідома помилка')}",
+            f"⚠️ <b>Помилка створення ліда</b>\n{detail}",
             parse_mode="HTML"
         )
 
@@ -560,10 +668,11 @@ async def voice_confirm_note(callback: CallbackQuery, state: FSMContext):
     result = await _api_post(f"/api/v1/leads/{lead_id}/notes", note_payload, user_id=callback.from_user.id)
     await state.clear()
     if result and "error" not in result:
+        note_kind = note_payload.get("note_type") or note_payload.get("category") or "general"
         await callback.message.answer(
             f"✅ <b>Нотатка додана!</b>\n\n"
             f"До ліда #{lead_id}\n"
-            f"Категория: {note_payload.get('category', 'general').upper()}\n"
+            f"Категорія: {note_kind.upper()}\n"
             f"Текст: {note_payload.get('content', '')[:100]}...",
             parse_mode="HTML"
         )
@@ -590,14 +699,51 @@ async def voice_edit_note(callback: CallbackQuery, state: FSMContext):
     )
 
 
+@router.message(Command("cancel"))
+@router.message(F.text.in_(["❌ Скасувати", "Скасувати", "Cancel", "cancel", "Ні", "ні", "no", "No", "відміна", "Відміна"]))
+@router.message(F.text == "📋 Menu")
+@router.message(F.text == "Меню")
+async def handle_cancel_voice_mode(message: Message, state: FSMContext):
+    """Handle cancel/exit from voice mode."""
+    current_state = await state.get_state()
+    if current_state == VoiceChatState.active:
+        await state.clear()
+        await message.answer(
+            "👋 <b>Вихід з режиму голосу</b>\n\n"
+            "Ви вийшли з голосового режиму. Повертайтесь до меню.",
+            reply_markup=get_main_menu_keyboard(),
+            parse_mode="HTML"
+        )
+        return
+    await state.clear()
+    await message.answer(
+        "📋 <b>MAIN MENU</b>\n\n"
+        "Navigate using the menu buttons below:",
+        reply_markup=get_main_menu_keyboard(),
+        parse_mode="HTML"
+    )
+
+
 @router.message(F.voice, VoiceChatState.active)
 async def handle_voice(message: Message, state: FSMContext):
     """Handle voice messages - ONLY when voice chat mode is active."""
-    from app.ai.unified_ai_service import unified_ai
+
+    # Check for cancel in any state
+    current_state = await state.get_state()
+    if current_state and "Confirm" in str(current_state):
+        # Check if user sent a cancel command - we need to check the message text
+        # But voice messages don't have text, so we need another way
+        # Let's check the current state data
+        pass
     
     bot_instance = get_bot()
+    user_id = message.from_user.id
     
     await message.answer("🎤 <i>Обробляю голос...</i>", parse_mode="HTML")
+
+    if ai_assistant is None:
+        await message.answer("⚠️ AI service unavailable right now. Please try again later.", parse_mode="HTML")
+        return
     
     try:
         # Download voice file
@@ -606,7 +752,7 @@ async def handle_voice(message: Message, state: FSMContext):
         voice_content = await bot_instance.download_file(file.file_path)
         
         # Transcribe with FREE Whisper (HuggingFace or OpenAI)
-        text = await unified_ai.transcribe_voice(voice_content)
+        text = await ai_assistant.transcribe_voice(voice_content)
         
         if not text:
             await message.answer(
@@ -614,14 +760,37 @@ async def handle_voice(message: Message, state: FSMContext):
                 parse_mode="HTML"
             )
             return
-        
-        await message.answer(f"🎤 <b>Розпізнано:</b> \"{text}\"", parse_mode="HTML")
+
+        quality = ai_assistant.assess_transcription_quality(text)
+        badge = _voice_quality_badge(quality.get("score", 0.0))
+        await message.answer(
+            f"🎤 <b>Розпізнано:</b> \"{text}\"\n"
+            f"{badge} <b>Якість:</b> {quality.get('label', 'UNKNOWN')} ({quality.get('score', 0.0):.0%})",
+            parse_mode="HTML"
+        )
+
+        if quality.get("needs_clarification"):
+            hints = quality.get("hints", [])
+            hint_text = "\n".join([f"• {h}" for h in hints]) if hints else "• Скажіть команду чіткіше"
+            await message.answer(
+                "⚠️ <b>Низька якість розпізнавання</b>\n\n"
+                "Повторіть голосову команду, щоб я не виконав дію помилково.\n\n"
+                f"<b>Підказки:</b>\n{hint_text}",
+                parse_mode="HTML"
+            )
+            return
         
         # Use AI to understand context better
-        leads = await get_leads_via_api(user_id=message.from_user.id)
+        leads = await get_leads_via_api(user_id=user_id)
+        
+        # Get user context for pronoun resolution
+        user_context = ai_assistant.get_user_context(user_id)
+        
+        # Resolve pronouns in text
+        resolved_text, resolved_lead_id, resolved_lead_name = ai_assistant.resolve_pronoun(text, user_id)
         
         # Parse command using unified AI
-        parsed = unified_ai.parse_command(text)
+        parsed = ai_assistant.parse_command(text, user_id=user_id)
         action = parsed.get("action")
         lead_data = parsed.get("lead_data", {})
         query = parsed.get("query")
@@ -633,12 +802,23 @@ async def handle_voice(message: Message, state: FSMContext):
                 action = "create"
             elif any(kw in text_lower for kw in ["нотатк", "замітк", "note", "записа"]):
                 action = "note"
-                # Try to extract lead ID
-                lead_id_match = re.search(r'лід[ау]?\s*#?(\d+)', text_lower)
-                if lead_id_match:
-                    lead_data["lead_id"] = int(lead_id_match.group(1))
+                # Try to extract lead ID - first from resolved context
+                if resolved_lead_id:
+                    lead_data["lead_id"] = resolved_lead_id
+                else:
+                    lead_id_match = re.search(r'лід[ау]?\s*#?(\d+)', text_lower)
+                    if lead_id_match:
+                        lead_data["lead_id"] = int(lead_id_match.group(1))
             elif any(kw in text_lower for kw in ["покажи", "список", "show", "list", "ліди"]):
                 action = "list"
+        
+        # Update context with action info if lead was mentioned
+        if lead_data.get("lead_id") or resolved_lead_id:
+            lead_id_for_context = lead_data.get("lead_id") or resolved_lead_id
+            # Get lead name for context
+            lead_info = next((l for l in leads if l.get("id") == lead_id_for_context), None)
+            lead_name = lead_info.get("full_name") if lead_info else f"Lead #{lead_id_for_context}"
+            ai_assistant.update_context(user_id, lead_id_for_context, lead_name, action)
         
         if action == "create" and lead_data:
             # Build lead data for confirmation
@@ -697,29 +877,19 @@ async def handle_voice(message: Message, state: FSMContext):
             category = await ai_assistant.categorize_note(note_content)
             
             # Show confirmation with inline keyboard
-            cat_emojis = {"contact": "📞", "email": "📧", "meeting": "💼", "general": "📋", "problem": "⚠️", "success": "✅"}
-            emoji = cat_emojis.get(category, "📋")
-            
-            cat_names_ua = {
-                "contact": "Контакт",
-                "email": "Email",
-                "meeting": "Зустріч",
-                "general": "Загальне",
-                "problem": "Проблема",
-                "success": "Успіх"
-            }
+            emoji = NOTE_TYPE_EMOJIS.get(category, "📋")
             
             confirm_text = (
                 f"📝 <b>ПІДТВЕРДЖЕННЯ</b>\n\n"
                 f"Додати нотатку до ліда <b>{lead_name}</b>?\n\n"
-                f"{emoji} <b>Категория:</b> {cat_names_ua.get(category, category).upper()}\n"
+                f"{emoji} <b>Категорія:</b> {NOTE_TYPE_LABELS_UA.get(category, category).upper()}\n"
                 f"📝 <b>Текст:</b>\n{note_content[:200]}...\n\n"
                 "<i>Виберіть дію:</i>"
             )
             
             await state.set_state(VoiceConfirmState.waiting_for_note_confirm)
             await state.update_data(
-                pending_note_data={"content": note_content, "category": category},
+                pending_note_data={"content": note_content, "note_type": category},
                 pending_note_lead_id=lead_id
             )
             await message.answer(confirm_text, reply_markup=get_voice_confirm_keyboard(lead_id=lead_id, data_type="note"), parse_mode="HTML")
@@ -755,24 +925,16 @@ async def handle_voice(message: Message, state: FSMContext):
                     # Format notes by category
                     categories = {}
                     for note in all_notes:
-                        cat = note.get("category", "general")
+                        cat = note.get("note_type") or note.get("category") or "general"
                         if cat not in categories:
                             categories[cat] = []
                         categories[cat].append(note)
                     
                     response = "📝 <b>ВАШІ НОТАТКИ</b>\n\n"
-                    cat_emojis = {
-                        "contact": "📞",
-                        "email": "📧", 
-                        "meeting": "💼",
-                        "general": "📋",
-                        "problem": "⚠️",
-                        "success": "✅"
-                    }
-                    
                     for cat, notes in categories.items():
-                        emoji = cat_emojis.get(cat, "📋")
-                        response += f"\n{emoji} <b>{cat.upper()}</b> ({len(notes)}):\n"
+                        emoji = NOTE_TYPE_EMOJIS.get(cat, "📋")
+                        cat_label = NOTE_TYPE_LABELS_UA.get(cat, cat).upper()
+                        response += f"\n{emoji} <b>{cat_label}</b> ({len(notes)}):\n"
                         for note in notes[:3]:  # Show max 3 per category
                             content = note.get("content", "")[:50]
                             lead_name = note.get("lead_name", "")
@@ -882,10 +1044,26 @@ async def handle_voice_inactive(message: Message, state: FSMContext):
 @router.message(VoiceChatState.active)
 async def handle_voice_text_commands(message: Message, state: FSMContext):
     """Handle TEXT commands in Voice Chat mode - both voice and text work!"""
-    from app.ai.unified_ai_service import unified_ai
-    
+
     text = message.text or ""
     if not text:
+        return
+
+    if ai_assistant is None:
+        await message.answer("⚠️ AI service unavailable right now. Please try again later.", parse_mode="HTML")
+        return
+    
+    # Check for cancel commands FIRST - before any other processing
+    text_lower = text.lower().strip()
+    cancel_keywords = ["скасуй", "скасувати", "cancel", "ні", "no", "відміна", "відмінити", "стоп", "stop"]
+    if text_lower in cancel_keywords or text == "/cancel":
+        await state.clear()
+        await message.answer(
+            "👋 <b>Вихід з режиму голосу</b>\n\n"
+            "Ви вийшли з голосового режиму. Повертайтесь до меню.",
+            reply_markup=get_main_menu_keyboard(),
+            parse_mode="HTML"
+        )
         return
     
     await message.answer(f"📝 <i>Обробляю команду: \"{text}\"...</i>", parse_mode="HTML")
@@ -895,23 +1073,27 @@ async def handle_voice_text_commands(message: Message, state: FSMContext):
         leads = await get_leads_via_api(user_id=message.from_user.id)
         
         # Parse command using unified AI
-        parsed = unified_ai.parse_command(text)
+        parsed = ai_assistant.parse_command(text, user_id=message.from_user.id)
         action = parsed.get("action")
         lead_data = parsed.get("lead_data", {})
         query = parsed.get("query")
         
-        # If no action detected, use simple rule-based fallback
+        # If no action detected, use simple rule-based fallback (flexible)
         text_lower = text.lower()
         if not action:
-            if any(kw in text_lower for kw in ["додай ліда", "створи ліда", "new lead", "новийлід"]):
+            # CREATE - flexible patterns
+            create_keywords = ["лід", "ліда", "лідів"]
+            create_verbs = ["додай", "додати", "потрібно", "створи", "new"]
+            if any(v in text_lower for v in create_verbs) and any(k in text_lower for k in create_keywords):
                 action = "create"
-            elif any(kw in text_lower for kw in ["нотатк", "замітк", "note", "записа"]):
+            # NOTE - flexible
+            elif any(k in text_lower for k in ["нотатк", "замітк", "note"]):
                 action = "note"
-                # Try to extract lead ID
                 lead_id_match = re.search(r'лід[ау]?\s*#?(\d+)', text_lower)
                 if lead_id_match:
                     lead_data["lead_id"] = int(lead_id_match.group(1))
-            elif any(kw in text_lower for kw in ["покажи", "список", "show", "list", "ліди"]):
+            # LIST - flexible
+            elif any(k in text_lower for k in ["лід", "ліди", "покажи", "show", "list"]):
                 action = "list"
         
         if action == "create" and lead_data:
@@ -971,29 +1153,19 @@ async def handle_voice_text_commands(message: Message, state: FSMContext):
             category = await ai_assistant.categorize_note(note_content)
             
             # Show confirmation with inline keyboard
-            cat_emojis = {"contact": "📞", "email": "📧", "meeting": "💼", "general": "📋", "problem": "⚠️", "success": "✅"}
-            emoji = cat_emojis.get(category, "📋")
-            
-            cat_names_ua = {
-                "contact": "Контакт",
-                "email": "Email",
-                "meeting": "Зустріч",
-                "general": "Загальне",
-                "problem": "Проблема",
-                "success": "Успіх"
-            }
+            emoji = NOTE_TYPE_EMOJIS.get(category, "📋")
             
             confirm_text = (
                 f"📝 <b>ПІДТВЕРДЖЕННЯ</b>\n\n"
                 f"Додати нотатку до ліда <b>{lead_name}</b>?\n\n"
-                f"{emoji} <b>Категория:</b> {cat_names_ua.get(category, category).upper()}\n"
+                f"{emoji} <b>Категорія:</b> {NOTE_TYPE_LABELS_UA.get(category, category).upper()}\n"
                 f"📝 <b>Текст:</b>\n{note_content[:200]}...\n\n"
                 "<i>Виберіть дію:</i>"
             )
             
             await state.set_state(VoiceConfirmState.waiting_for_note_confirm)
             await state.update_data(
-                pending_note_data={"content": note_content, "category": category},
+                pending_note_data={"content": note_content, "note_type": category},
                 pending_note_lead_id=lead_id
             )
             await message.answer(confirm_text, reply_markup=get_voice_confirm_keyboard(lead_id=lead_id, data_type="note"), parse_mode="HTML")
@@ -1029,24 +1201,16 @@ async def handle_voice_text_commands(message: Message, state: FSMContext):
                     # Format notes by category
                     categories = {}
                     for note in all_notes:
-                        cat = note.get("category", "general")
+                        cat = note.get("note_type") or note.get("category") or "general"
                         if cat not in categories:
                             categories[cat] = []
                         categories[cat].append(note)
                     
                     response = "📝 <b>ВАШІ НОТАТКИ</b>\n\n"
-                    cat_emojis = {
-                        "contact": "📞",
-                        "email": "📧", 
-                        "meeting": "💼",
-                        "general": "📋",
-                        "problem": "⚠️",
-                        "success": "✅"
-                    }
-                    
                     for cat, notes in categories.items():
-                        emoji = cat_emojis.get(cat, "📋")
-                        response += f"\n{emoji} <b>{cat.upper()}</b> ({len(notes)}):\n"
+                        emoji = NOTE_TYPE_EMOJIS.get(cat, "📋")
+                        cat_label = NOTE_TYPE_LABELS_UA.get(cat, cat).upper()
+                        response += f"\n{emoji} <b>{cat_label}</b> ({len(notes)}):\n"
                         for note in notes[:3]:  # Show max 3 per category
                             content = note.get("content", "")[:50]
                             lead_name = note.get("lead_name", "")
@@ -1333,6 +1497,10 @@ async def handle_sale_action(callback: CallbackQuery, state: FSMContext):
         await state.set_state(SaleManagementState.updating_notes)
         await callback.answer("Editing notes...")
         await callback.message.answer("📝 <b>Enter sale notes:</b>", parse_mode="HTML")
+    elif action == "del":
+        await callback.answer("Видалення sale поки недоступне", show_alert=True)
+    else:
+        await callback.answer("Невідома дія", show_alert=True)
 
 
 @router.callback_query(F.data.startswith("seds"))
@@ -1452,6 +1620,12 @@ async def noop(callback: CallbackQuery):
     await callback.answer()
 
 
+@router.callback_query(F.data == "snoop")
+async def sales_noop(callback: CallbackQuery):
+    """No-op for sales pagination page indicator button."""
+    await callback.answer()
+
+
 # ─────────────────────────────────────────────────────────────
 # Settings Callbacks
 # ─────────────────────────────────────────────────────────────
@@ -1481,6 +1655,7 @@ async def settings_notif(callback: CallbackQuery):
 
 @router.callback_query(F.data == "settings_ai")
 async def settings_ai(callback: CallbackQuery):
+    min_score_pct = int(settings.MIN_TRANSFER_SCORE * 100)
     await safe_edit(
         callback,
         "🤖 <b>AI ASSISTANT — ПОВНА ІНСТРУКЦІЯ</b>\n\n"
@@ -1490,16 +1665,16 @@ async def settings_ai(callback: CallbackQuery):
         "• Аналізувати лідів за допомогою AI\n"
         "• Оцінювати якість лідів (0-100%)\n"
         "• Давати рекомендації щодо подальших дій\n"
-        "• Categorize нотаток автоматично\n"
+        "• Категоризувати нотатки автоматично\n"
         "• Шукати та фільтрувати лідів\n"
         "• Генерувати звіти та статистику\n\n"
         "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         "📝 <b>ЯК КОРИСТУВАТИСЯ:</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        "<b>1. Текстовий режим (🤖 AI Assist):</b>\n"
+        "<b>1. AI Assist (🤖 Text + Voice):</b>\n"
         "• Натисніть кнопку <b>🤖 AI Assist</b> у меню\n"
-        "• Надсилайте запити текстом:\n"
-        "  • <code>Show hot leads</code> — гарячі ліди (score ≥ 0.6)\n"
+        "• Надсилайте запити текстом або голосом:\n"
+        f"  • <code>Show hot leads</code> — гарячі ліди (score ≥ {settings.MIN_TRANSFER_SCORE:.2f})\n"
         "  • <code>How many from scanner?</code> — ліди за джерелом\n"
         "  • <code>Who is the best candidate?</code> — топ лід за AI\n"
         "  • <code>Leads in qualified stage</code> — фільтр за стадією\n"
@@ -1518,8 +1693,10 @@ async def settings_ai(callback: CallbackQuery):
         "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         "⚙️ <b>ПОТОЧНІ НАЛАШТУВАННЯ:</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        "• Model: <code>gpt-4o-mini</code>\n"
-        "• Min Score: <code>0.60</code> (60%)\n"
+        f"• Model: <code>{settings.OPENAI_MODEL}</code>\n"
+        f"• Min Score: <code>{settings.MIN_TRANSFER_SCORE:.2f}</code> ({min_score_pct}%)\n"
+        f"• AI Cache TTL: <code>{settings.AI_CACHE_TTL}s</code>\n"
+        f"• Re-analysis window: <code>{settings.AI_ANALYSIS_STALE_DAYS} days</code>\n"
         "• Auto-analyze: <code>OFF</code>\n\n"
         "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         "💡 <b>ПОРАДИ:</b>\n"
@@ -2369,7 +2546,7 @@ async def finalize_lead_creation(callback: CallbackQuery, state: FSMContext):
     lead = await _api_post("/api/v1/leads", data, user_id=callback.from_user.id)
     await state.clear()
 
-    if lead:
+    if lead and "error" not in lead:
         text = (
             f"✅ <b>Lead Created!</b>\n\n"
             f"<b>ID:</b>  #{lead['id']}\n"
@@ -2383,7 +2560,8 @@ async def finalize_lead_creation(callback: CallbackQuery, state: FSMContext):
         builder.adjust(1)
         await safe_edit(callback, text, builder.as_markup())
     else:
-        await safe_edit(callback, ui.format_error("Failed to create lead."), get_retry_keyboard("goto_newlead", "goto_menu"))
+        error_detail = lead.get("detail", "Unknown error") if isinstance(lead, dict) else "Unknown error"
+        await safe_edit(callback, ui.format_error("Failed to create lead.", error_detail), get_retry_keyboard("goto_newlead", "goto_menu"))
 
 
 # ─────────────────────────────────────────────────────────────
@@ -2640,6 +2818,28 @@ async def edit_paste_lead(callback: CallbackQuery, state: FSMContext):
 # ─────────────────────────────────────────────────────────────
 # Error Handler
 # ─────────────────────────────────────────────────────────────
+
+@router.message()
+async def fallback_unhandled_message(message: Message, state: FSMContext):
+    """Catch unhandled text/messages so updates are not left as 'not handled'."""
+    if message.text and message.text.startswith("/"):
+        await message.answer(
+            "ℹ️ Команду не розпізнано. Спробуйте /start або /menu",
+            parse_mode="HTML"
+        )
+        return
+
+    # Keep response minimal for random/unexpected updates.
+    await message.answer(
+        "✅ Отримано. Відкрийте меню: /menu",
+        parse_mode="HTML"
+    )
+
+
+@router.callback_query()
+async def fallback_unhandled_callback(callback: CallbackQuery):
+    """Catch-all for unknown callbacks to avoid unhandled callback updates."""
+    await callback.answer("Команда недоступна", show_alert=False)
 
 @router.errors()
 async def handle_errors(event: Exception):

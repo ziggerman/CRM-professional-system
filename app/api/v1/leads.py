@@ -306,7 +306,7 @@ async def update_stage(
     """
     try:
         lead = await svc.get_lead(lead_id)
-        return await svc.transition_stage(lead, data.stage)
+        return await svc.transition_stage(lead, data.stage, lost_reason=data.lost_reason)
     except LeadNotFoundError:
         _not_found(lead_id)
     except LeadStageError as e:
@@ -440,6 +440,7 @@ async def transfer_lead(
 @router.get("/{lead_id}/notes", response_model=NoteListResponse)
 async def list_lead_notes(
     lead_id: int,
+    note_type: str | None = Query(default=None, description="Filter notes by type"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
     svc: LeadService = Depends(get_lead_service),
@@ -453,20 +454,26 @@ async def list_lead_notes(
     session = svc.repo.db
 
     # Count total
-    count_result = await session.execute(
-        select(func.count()).select_from(LeadNote).where(LeadNote.lead_id == lead_id)
-    )
+    count_query = select(func.count()).select_from(LeadNote).where(LeadNote.lead_id == lead_id)
+    if note_type:
+        count_query = count_query.where(LeadNote.note_type == note_type)
+
+    count_result = await session.execute(count_query)
     total = count_result.scalar() or 0
 
     # Paginated fetch
     offset = (page - 1) * page_size
-    items_result = await session.execute(
+    items_query = (
         select(LeadNote)
         .where(LeadNote.lead_id == lead_id)
-        .order_by(LeadNote.created_at.desc())
+        .order_by(LeadNote.is_pinned.desc(), LeadNote.created_at.desc())
         .limit(page_size)
         .offset(offset)
     )
+    if note_type:
+        items_query = items_query.where(LeadNote.note_type == note_type)
+
+    items_result = await session.execute(items_query)
     page_notes = list(items_result.scalars().all())
 
     total_pages = (total + page_size - 1) // page_size if total > 0 else 1
@@ -506,6 +513,58 @@ async def create_lead_note(
     await session.flush()
     await session.refresh(note)
     
+    return note
+
+
+@router.patch("/{lead_id}/notes/{note_id}/pin", response_model=NoteResponse)
+async def pin_lead_note(
+    lead_id: int,
+    note_id: int,
+    svc: LeadService = Depends(get_lead_service),
+):
+    """Pin a note to keep it at the top of lead notes."""
+    from sqlalchemy import select
+    from app.models.note import LeadNote
+
+    await svc.get_lead(lead_id)
+    session = svc.repo.db
+
+    result = await session.execute(
+        select(LeadNote).where(LeadNote.id == note_id, LeadNote.lead_id == lead_id)
+    )
+    note = result.scalar_one_or_none()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    note.is_pinned = True
+    await session.flush()
+    await session.refresh(note)
+    return note
+
+
+@router.patch("/{lead_id}/notes/{note_id}/unpin", response_model=NoteResponse)
+async def unpin_lead_note(
+    lead_id: int,
+    note_id: int,
+    svc: LeadService = Depends(get_lead_service),
+):
+    """Unpin a previously pinned note."""
+    from sqlalchemy import select
+    from app.models.note import LeadNote
+
+    await svc.get_lead(lead_id)
+    session = svc.repo.db
+
+    result = await session.execute(
+        select(LeadNote).where(LeadNote.id == note_id, LeadNote.lead_id == lead_id)
+    )
+    note = result.scalar_one_or_none()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    note.is_pinned = False
+    await session.flush()
+    await session.refresh(note)
     return note
 
 

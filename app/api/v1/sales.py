@@ -9,6 +9,7 @@ from app.models.sale import SaleStage
 from app.schemas.sale import (
     SaleResponse,
     SaleListResponse,
+    SalesAnalyticsResponse,
     SaleStageUpdate,
     SaleUpdate,
 )
@@ -57,6 +58,14 @@ async def list_sales(
     }
 
 
+@router.get("/analytics", response_model=SalesAnalyticsResponse)
+async def get_sales_analytics(
+    repo: SaleRepository = Depends(get_sale_repo),
+):
+    """Sales funnel/revenue analytics for managers and admins."""
+    return await repo.get_sales_analytics()
+
+
 @router.get("/{sale_id}", response_model=SaleResponse)
 async def get_sale(
     sale_id: int,
@@ -89,7 +98,7 @@ async def update_sale_stage(
         _not_found(sale_id)
     
     try:
-        return await transfer_svc.advance_sale_stage(sale, data.stage)
+        return await transfer_svc.advance_sale_stage(sale, data.stage, amount=data.amount)
     except TransferError as e:
         _bad_request(str(e))
 

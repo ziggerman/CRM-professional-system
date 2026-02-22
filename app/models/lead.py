@@ -6,7 +6,7 @@ import enum
 from typing import TYPE_CHECKING
 from datetime import datetime, UTC
 
-from sqlalchemy import String, Float, Integer, DateTime, Enum as SAEnum, ForeignKey
+from sqlalchemy import String, Float, Integer, DateTime, Enum as SAEnum, ForeignKey, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.base import Base
@@ -14,6 +14,9 @@ from app.core.base import Base
 if TYPE_CHECKING:
     from app.models.sale import Sale
     from app.models.user import User
+    from app.models.note import LeadNote
+    from app.models.attachment import LeadAttachment
+    from app.models.history import LeadHistory
 
 
 class LeadSource(str, enum.Enum):
@@ -37,6 +40,16 @@ class ColdStage(str, enum.Enum):
     QUALIFIED = "QUALIFIED"
     TRANSFERRED = "TRANSFERRED"
     LOST = "LOST"
+
+
+class LostReason(str, enum.Enum):
+    """Standardized reasons for lost leads (required for analytics)."""
+    NO_BUDGET = "NO_BUDGET"
+    NO_RESPONSE = "NO_RESPONSE"
+    COMPETITOR = "COMPETITOR"
+    NOT_INTERESTED = "NOT_INTERESTED"
+    INVALID_CONTACT = "INVALID_CONTACT"
+    OTHER = "OTHER"
 
 
 # Ordered sequence for validation — cannot skip steps
@@ -103,6 +116,9 @@ class Lead(Base):
     business_domain: Mapped[BusinessDomain | None] = mapped_column(
         SAEnum(BusinessDomain), nullable=True
     )
+    lost_reason: Mapped[LostReason | None] = mapped_column(
+        SAEnum(LostReason), nullable=True
+    )
     
     # Activity - number of communications
     message_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -111,6 +127,8 @@ class Lead(Base):
     ai_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     ai_recommendation: Mapped[str | None] = mapped_column(String(64), nullable=True)
     ai_reason: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    ai_analyzed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    quality_tier: Mapped[str | None] = mapped_column(String(16), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
@@ -124,6 +142,11 @@ class Lead(Base):
     # Assignment
     assigned_to_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     
+    # Soft delete fields
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    deleted_by: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    
     # Relationships
     assigned_to: Mapped["User | None"] = relationship("User", back_populates="leads", foreign_keys=[assigned_to_id])
     
@@ -133,4 +156,27 @@ class Lead(Base):
         back_populates="lead", 
         uselist=False,
         cascade="all, delete-orphan"
+    )
+    
+    # Relationship to Notes
+    notes: Mapped[list["LeadNote"]] = relationship(
+        "LeadNote",
+        back_populates="lead",
+        cascade="all, delete-orphan",
+        order_by="LeadNote.created_at.desc()"
+    )
+    
+    # Relationship to Attachments
+    attachments: Mapped[list["LeadAttachment"]] = relationship(
+        "LeadAttachment",
+        back_populates="lead",
+        cascade="all, delete-orphan"
+    )
+    
+    # Relationship to History
+    history: Mapped[list["LeadHistory"]] = relationship(
+        "LeadHistory",
+        back_populates="lead",
+        cascade="all, delete-orphan",
+        order_by="LeadHistory.created_at.desc()"
     )

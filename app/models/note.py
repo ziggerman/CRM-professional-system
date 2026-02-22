@@ -4,7 +4,7 @@ Lead Note model - comments and activity history for leads.
 from datetime import datetime, UTC
 from typing import Optional, TYPE_CHECKING
 
-from sqlalchemy import String, Text, ForeignKey, DateTime, Integer
+from sqlalchemy import String, Text, ForeignKey, DateTime, Integer, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.base import Base
@@ -25,6 +25,7 @@ class LeadNote(Base):
     author_name: Optional[str] = mapped_column(String(128), nullable=True)
     content: str = mapped_column(Text, nullable=False)
     note_type: str = mapped_column(String(32), default="comment")
+    is_pinned: bool = mapped_column(Boolean, default=False, nullable=False, index=True)
     created_at: datetime = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     updated_at: datetime = mapped_column(
         DateTime(timezone=True), 

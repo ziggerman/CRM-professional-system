@@ -6,7 +6,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.models.lead import LeadSource, BusinessDomain, ColdStage
+from app.models.lead import LeadSource, BusinessDomain, ColdStage, LostReason
 from app.core.sanitization import sanitize_short, sanitize_long
 
 
@@ -19,47 +19,18 @@ class LeadCreate(BaseModel):
     source: LeadSource
     business_domain: Optional[BusinessDomain] = None
     telegram_id: Optional[str] = Field(None, max_length=64)
-    
-    # New fields
-    full_name: Optional[str] = Field(None, max_length=128)
-    email: Optional[str] = Field(None, max_length=128)
-    phone: Optional[str] = Field(None, max_length=32)
-    external_username: Optional[str] = Field(None, max_length=128)
-    intent: Optional[str] = Field(None, max_length=256)
-    company: Optional[str] = Field(None, max_length=128)
-    position: Optional[str] = Field(None, max_length=128)
-    budget: Optional[str] = Field(None, max_length=64)
-    pain_points: Optional[str] = Field(None, max_length=1024)
-
-    @field_validator("full_name", "email", "company", "position", "external_username", mode="before")
-    @classmethod
-    def sanitize_short_fields(cls, v: Optional[str]) -> Optional[str]:
-        return sanitize_short(v)
-
-    @field_validator("intent", "budget", "pain_points", mode="before")
-    @classmethod
-    def sanitize_long_fields(cls, v: Optional[str]) -> Optional[str]:
-        return sanitize_long(v)
 
 
 class LeadUpdate(BaseModel):
     """Schema for updating lead details."""
     source: Optional[LeadSource] = None
     business_domain: Optional[BusinessDomain] = None
-    full_name: Optional[str] = Field(None, max_length=128)
-    email: Optional[str] = Field(None, max_length=128)
-    phone: Optional[str] = Field(None, max_length=32)
-    external_username: Optional[str] = Field(None, max_length=128)
-    intent: Optional[str] = Field(None, max_length=256)
-    company: Optional[str] = Field(None, max_length=128)
-    position: Optional[str] = Field(None, max_length=128)
-    budget: Optional[str] = Field(None, max_length=64)
-    pain_points: Optional[str] = Field(None, max_length=1024)
 
 
 class LeadStageUpdate(BaseModel):
     """Schema for updating lead stage."""
     stage: ColdStage
+    lost_reason: Optional[LostReason] = None
 
     @field_validator("stage", mode="before")
     @classmethod
@@ -92,22 +63,23 @@ class LeadResponse(BaseModel):
     source: LeadSource
     stage: ColdStage
     business_domain: Optional[BusinessDomain]
+    lost_reason: Optional[LostReason]
     message_count: int
-    
-    # New fields
-    full_name: Optional[str]
-    email: Optional[str]
-    phone: Optional[str]
-    external_username: Optional[str]
-    intent: Optional[str]
-    company: Optional[str]
-    position: Optional[str]
-    budget: Optional[str]
-    pain_points: Optional[str]
 
     ai_score: Optional[float]
     ai_recommendation: Optional[str]
     ai_reason: Optional[str]
+    ai_analyzed_at: Optional[datetime]
+    quality_tier: Optional[str]
+    
+    # Assignment
+    assigned_to_id: Optional[int]
+    
+    # Soft delete
+    is_deleted: bool
+    deleted_at: Optional[datetime]
+    deleted_by: Optional[str]
+    
     created_at: datetime
     updated_at: datetime
 
