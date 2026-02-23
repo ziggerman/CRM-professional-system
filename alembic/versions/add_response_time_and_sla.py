@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_response_time_and_sla'
-down_revision = 'e60027802bd9_phase_10_12_13_updates_v3'
+down_revision = 'c6f2e13bf605_add_lead_attachments'
 branch_labels = None
 depends_on = None
 

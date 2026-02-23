@@ -112,6 +112,12 @@ class LeadResponse(BaseModel):
     # Assignment
     assigned_to_id: Optional[int]
     
+    # SLA tracking
+    first_response_at: Optional[datetime] = None
+    sla_deadline_at: Optional[datetime] = None
+    is_overdue: bool = False
+    days_in_stage: int = 0
+    
     # Soft delete
     is_deleted: bool
     deleted_at: Optional[datetime]

@@ -762,3 +762,111 @@
 2026-02-23 10:57:28,415 - aiogram.event - INFO - Update id=947468428 is handled. Duration 163 ms by bot id=8558216907
 2026-02-23 10:57:29,174 - aiogram.event - INFO - Update id=947468429 is handled. Duration 75 ms by bot id=8558216907
 2026-02-23 10:57:30,001 - aiogram.event - INFO - Update id=947468430 is handled. Duration 75 ms by bot id=8558216907
+2026-02-23 10:59:27,203 - aiogram.event - INFO - Update id=947468431 is handled. Duration 217 ms by bot id=8558216907
+2026-02-23 10:59:27,960 - aiogram.event - INFO - Update id=947468432 is handled. Duration 92 ms by bot id=8558216907
+2026-02-23 10:59:28,788 - aiogram.event - INFO - Update id=947468433 is handled. Duration 101 ms by bot id=8558216907
+2026-02-23 10:59:29,435 - aiogram.event - INFO - Update id=947468434 is handled. Duration 88 ms by bot id=8558216907
+2026-02-23 10:59:30,027 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:59:30,195 - aiogram.event - INFO - Update id=947468435 is handled. Duration 249 ms by bot id=8558216907
+2026-02-23 10:59:30,633 - aiogram.event - INFO - Update id=947468436 is handled. Duration 130 ms by bot id=8558216907
+2026-02-23 11:01:10,381 - aiogram.event - INFO - Update id=947468437 is handled. Duration 167 ms by bot id=8558216907
+2026-02-23 11:01:11,616 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 11:01:11,821 - aiogram.event - INFO - Update id=947468438 is handled. Duration 328 ms by bot id=8558216907
+2026-02-23 11:01:12,513 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads/16 "HTTP/1.1 200 OK"
+2026-02-23 11:01:12,754 - aiogram.event - INFO - Update id=947468439 is handled. Duration 387 ms by bot id=8558216907
+2026-02-23 11:01:15,174 - httpx - INFO - HTTP Request: POST http://localhost:8000/api/v1/leads/16/analyze "HTTP/1.1 200 OK"
+2026-02-23 11:01:15,322 - aiogram.event - INFO - Update id=947468440 is handled. Duration 744 ms by bot id=8558216907
+2026-02-23 11:01:17,081 - httpx - INFO - HTTP Request: POST http://localhost:8000/api/v1/leads/16/analyze "HTTP/1.1 200 OK"
+2026-02-23 11:01:17,204 - app.bot.handlers - WARNING - safe_edit failed: Telegram server says - Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+2026-02-23 11:01:17,322 - aiogram.event - INFO - Update id=947468441 is handled. Duration 422 ms by bot id=8558216907
+2026-02-23 11:01:34,035 - aiogram.event - INFO - Update id=947468442 is handled. Duration 360 ms by bot id=8558216907
+2026-02-23 11:01:35,539 - aiogram.event - INFO - Update id=947468443 is handled. Duration 74 ms by bot id=8558216907
+2026-02-23 11:01:36,614 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 11:01:36,733 - aiogram.event - INFO - Update id=947468444 is handled. Duration 206 ms by bot id=8558216907
+2026-02-23 11:01:37,838 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads/16 "HTTP/1.1 200 OK"
+2026-02-23 11:01:37,973 - aiogram.event - INFO - Update id=947468445 is handled. Duration 213 ms by bot id=8558216907
+2026-02-23 11:01:38,999 - httpx - INFO - HTTP Request: POST http://localhost:8000/api/v1/leads/16/analyze "HTTP/1.1 200 OK"
+2026-02-23 11:01:39,139 - aiogram.event - INFO - Update id=947468446 is handled. Duration 218 ms by bot id=8558216907
+2026-02-23 11:01:40,752 - httpx - INFO - HTTP Request: POST http://localhost:8000/api/v1/leads/16/analyze "HTTP/1.1 200 OK"
+2026-02-23 11:01:40,826 - app.bot.handlers - WARNING - safe_edit failed: Telegram server says - Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+2026-02-23 11:01:40,878 - aiogram.event - INFO - Update id=947468447 is handled. Duration 217 ms by bot id=8558216907
+2026-02-23 11:04:11,267 - aiogram.event - INFO - Update id=947468448 is handled. Duration 178 ms by bot id=8558216907
+2026-02-23 11:04:12,407 - aiogram.event - INFO - Update id=947468449 is handled. Duration 89 ms by bot id=8558216907
+2026-02-23 11:05:35,034 - aiogram.event - INFO - Update id=947468450 is handled. Duration 179 ms by bot id=8558216907
+2026-02-23 11:05:59,119 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramConflictError: Telegram server says - Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-02-23 11:05:59,120 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8558216907)
+2026-02-23 11:06:03,986 - aiogram.dispatcher - INFO - Connection established (tryings = 1, bot id = 8558216907)
+2026-02-23 11:06:04,285 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramConflictError: Telegram server says - Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-02-23 11:06:04,285 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8558216907)
+2026-02-23 11:06:04,377 - aiogram.event - INFO - Update id=947468451 is handled. Duration 390 ms by bot id=8558216907
+2026-02-23 11:06:08,437 - aiogram.dispatcher - INFO - Connection established (tryings = 1, bot id = 8558216907)
+2026-02-23 11:06:08,525 - aiogram.event - INFO - Update id=947468452 is handled. Duration 84 ms by bot id=8558216907
+2026-02-23 11:06:09,698 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramConflictError: Telegram server says - Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-02-23 11:06:09,698 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8558216907)
+2026-02-23 11:06:13,045 - aiogram.dispatcher - INFO - Connection established (tryings = 1, bot id = 8558216907)
+2026-02-23 11:06:13,137 - aiogram.event - INFO - Update id=947468454 is handled. Duration 89 ms by bot id=8558216907
+2026-02-23 11:06:13,961 - aiogram.event - INFO - Update id=947468455 is handled. Duration 87 ms by bot id=8558216907
+2026-02-23 11:06:14,966 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramConflictError: Telegram server says - Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-02-23 11:06:14,966 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8558216907)
+2026-02-23 11:06:15,194 - aiogram.event - INFO - Update id=947468456 is handled. Duration 310 ms by bot id=8558216907
+2026-02-23 11:06:16,936 - aiogram.dispatcher - INFO - Connection established (tryings = 1, bot id = 8558216907)
+2026-02-23 11:06:17,062 - aiogram.event - INFO - Update id=947468458 is handled. Duration 124 ms by bot id=8558216907
+2026-02-23 11:06:17,987 - aiogram.event - INFO - Update id=947468459 is handled. Duration 128 ms by bot id=8558216907
+2026-02-23 11:06:20,019 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/dashboard "HTTP/1.1 500 Internal Server Error"
+2026-02-23 11:06:20,034 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 11:06:20,036 - app.bot.handlers - ERROR - Bot error: update=Update(update_id=947468460, message=None, edited_message=None, channel_post=None, edited_channel_post=None, business_connection=None, business_message=None, edited_business_message=None, deleted_business_messages=None, message_reaction=None, message_reaction_count=None, inline_query=None, chosen_inline_result=None, callback_query=CallbackQuery(id='2515826332918731252', from_user=User(id=585761464, is_bot=False, first_name='Паша', last_name='Стоцький', username='stotskyii', language_code='uk', is_premium=None, added_to_attachment_menu=None, can_join_groups=None, can_read_all_group_messages=None, supports_inline_queries=None, can_connect_to_business=None, has_main_web_app=None), chat_instance='-3774474001004886826', message=Message(message_id=4668, date=datetime.datetime(2026, 2, 23, 9, 6, 14, tzinfo=TzInfo(UTC)), chat=Chat(id=585761464, type='private', title=None, username='stotskyii', first_name='Паша', last_name='Стоцький', is_forum=None, accent_color_id=None, active_usernames=None, available_reactions=None, background_custom_emoji_id=None, bio=None, birthdate=None, business_intro=None, business_location=None, business_opening_hours=None, can_set_sticker_set=None, custom_emoji_sticker_set_name=None, description=None, emoji_status_custom_emoji_id=None, emoji_status_expiration_date=None, has_aggressive_anti_spam_enabled=None, has_hidden_members=None, has_private_forwards=None, has_protected_content=None, has_restricted_voice_and_video_messages=None, has_visible_history=None, invite_link=None, join_by_request=None, join_to_send_messages=None, linked_chat_id=None, location=None, message_auto_delete_time=None, permissions=None, personal_chat=None, photo=None, pinned_message=None, profile_accent_color_id=None, profile_background_custom_emoji_id=None, slow_mode_delay=None, sticker_set_name=None, unrestrict_boost_count=None), message_thread_id=None, from_user=User(id=8558216907, is_bot=True, first_name='CRM system', last_name=None, username='crms_god_bot', language_code=None, is_premium=None, added_to_attachment_menu=None, can_join_groups=None, can_read_all_group_messages=None, supports_inline_queries=None, can_connect_to_business=None, has_main_web_app=None), sender_chat=None, sender_boost_count=None, sender_business_bot=None, business_connection_id=None, forward_origin=None, is_topic_message=None, is_automatic_forward=None, reply_to_message=None, external_reply=None, quote=None, reply_to_story=None, via_bot=None, edit_date=1771837578, has_protected_content=None, is_from_offline=None, media_group_id=None, author_signature=None, text='📋 MAIN MENU\n\nChoose an option:', entities=[MessageEntity(type='bold', offset=3, length=9, url=None, user=None, language=None, custom_emoji_id=None)], link_preview_options=None, effect_id=None, animation=None, audio=None, document=None, paid_media=None, photo=None, sticker=None, story=None, video=None, video_note=None, voice=None, caption=None, caption_entities=None, show_caption_above_media=None, has_media_spoiler=None, contact=None, dice=None, game=None, poll=None, venue=None, location=None, new_chat_members=None, left_chat_member=None, new_chat_title=None, new_chat_photo=None, delete_chat_photo=None, group_chat_created=None, supergroup_chat_created=None, channel_chat_created=None, message_auto_delete_timer_changed=None, migrate_to_chat_id=None, migrate_from_chat_id=None, pinned_message=None, invoice=None, successful_payment=None, refunded_payment=None, users_shared=None, chat_shared=None, connected_website=None, write_access_allowed=None, passport_data=None, proximity_alert_triggered=None, boost_added=None, chat_background_set=None, forum_topic_created=None, forum_topic_edited=None, forum_topic_closed=None, forum_topic_reopened=None, general_forum_topic_hidden=None, general_forum_topic_unhidden=None, giveaway_created=None, giveaway=None, giveaway_winners=None, giveaway_completed=None, video_chat_scheduled=None, video_chat_started=None, video_chat_ended=None, video_chat_participants_invited=None, web_app_data=None, reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='📊 Dashboard', url=None, callback_data='goto_dashboard', web_app=None, login_url=None, switch_inline_query=None, switch_inline_query_current_chat=None, switch_inline_query_chosen_chat=None, callback_game=None, pay=None), InlineKeyboardButton(text='📋 Leads', url=None, callback_data='goto_leads', web_app=None, login_url=None, switch_inline_query=None, switch_inline_query_current_chat=None, switch_inline_query_chosen_chat=None, callback_game=None, pay=None)], [InlineKeyboardButton(text='➕ New Lead', url=None, callback_data='goto_newlead', web_app=None, login_url=None, switch_inline_query=None, switch_inline_query_current_chat=None, switch_inline_query_chosen_chat=None, callback_game=None, pay=None), InlineKeyboardButton(text='📋 Paste Lead', url=None, callback_data='goto_paste_lead', web_app=None, login_url=None, switch_inline_query=None, switch_inline_query_current_chat=None, switch_inline_query_chosen_chat=None, callback_game=None, pay=None)], [InlineKeyboardButton(text='🔍 Search', url=None, callback_data='goto_search', web_app=None, login_url=None, switch_inline_query=None, switch_inline_query_current_chat=None, switch_inline_query_chosen_chat=None, callback_game=None, pay=None), InlineKeyboardButton(text='⚡ Quick', url=None, callback_data='goto_quick', web_app=None, login_url=None, switch_inline_query=None, switch_inline_query_current_chat=None, switch_inline_query_chosen_chat=None, callback_game=None, pay=None), InlineKeyboardButton(text='⚙️ Settings', url=None, callback_data='goto_settings', web_app=None, login_url=None, switch_inline_query=None, switch_inline_query_current_chat=None, switch_inline_query_chosen_chat=None, callback_game=None, pay=None)]]), forward_date=None, forward_from=None, forward_from_chat=None, forward_from_message_id=None, forward_sender_name=None, forward_signature=None, user_shared=None), inline_message_id=None, data='goto_dashboard', game_short_name=None), shipping_query=None, pre_checkout_query=None, purchased_paid_media=None, poll=None, poll_answer=None, my_chat_member=None, chat_member=None, chat_join_request=None, chat_boost=None, removed_chat_boost=None) exception=NameError("name 'get_dashboard_keyboard' is not defined")
+2026-02-23 11:06:20,036 - aiogram.event - INFO - Update id=947468460 is handled. Duration 129 ms by bot id=8558216907
+2026-02-23 11:06:20,128 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramConflictError: Telegram server says - Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-02-23 11:06:20,128 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8558216907)
+2026-02-23 11:06:21,275 - aiogram.dispatcher - INFO - Connection established (tryings = 1, bot id = 8558216907)
+2026-02-23 11:06:21,306 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 11:06:21,375 - aiogram.event - INFO - Update id=947468461 is handled. Duration 97 ms by bot id=8558216907
+2026-02-23 11:06:22,950 - aiogram.event - INFO - Update id=947468462 is handled. Duration 72 ms by bot id=8558216907
+2026-02-23 11:06:24,183 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 11:06:24,301 - aiogram.event - INFO - Update id=947468463 is handled. Duration 200 ms by bot id=8558216907
+2026-02-23 11:06:25,493 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads/15 "HTTP/1.1 200 OK"
+2026-02-23 11:06:25,499 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramConflictError: Telegram server says - Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-02-23 11:06:25,499 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8558216907)
+2026-02-23 11:06:25,623 - aiogram.event - INFO - Update id=947468464 is handled. Duration 206 ms by bot id=8558216907
+2026-02-23 11:06:27,791 - aiogram.dispatcher - INFO - Connection established (tryings = 1, bot id = 8558216907)
+2026-02-23 11:06:27,884 - httpx - INFO - HTTP Request: POST http://localhost:8000/api/v1/leads/15/analyze "HTTP/1.1 200 OK"
+2026-02-23 11:06:27,999 - aiogram.event - INFO - Update id=947468465 is handled. Duration 206 ms by bot id=8558216907
+2026-02-23 11:06:30,629 - aiogram.event - INFO - Update id=947468466 is handled. Duration 70 ms by bot id=8558216907
+2026-02-23 11:06:30,682 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramConflictError: Telegram server says - Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-02-23 11:06:30,683 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8558216907)
+2026-02-23 11:06:32,090 - aiogram.dispatcher - INFO - Connection established (tryings = 1, bot id = 8558216907)
+2026-02-23 11:06:32,224 - aiogram.event - INFO - Update id=947468467 is handled. Duration 132 ms by bot id=8558216907
+2026-02-23 11:06:33,444 - aiogram.event - INFO - Update id=947468468 is handled. Duration 119 ms by bot id=8558216907
+2026-02-23 11:06:34,077 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 11:06:34,255 - aiogram.event - INFO - Update id=947468469 is handled. Duration 217 ms by bot id=8558216907
+2026-02-23 11:06:36,181 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramConflictError: Telegram server says - Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-02-23 11:06:36,181 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8558216907)
+2026-02-23 11:06:41,879 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramConflictError: Telegram server says - Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-02-23 11:06:41,880 - aiogram.dispatcher - WARNING - Sleep for 1.269476 seconds and try again... (tryings = 1, bot id = 8558216907)
+2026-02-23 11:06:48,223 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramConflictError: Telegram server says - Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-02-23 11:06:48,223 - aiogram.dispatcher - WARNING - Sleep for 1.539332 seconds and try again... (tryings = 2, bot id = 8558216907)
+2026-02-23 11:06:55,328 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramConflictError: Telegram server says - Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-02-23 11:06:55,329 - aiogram.dispatcher - WARNING - Sleep for 2.156711 seconds and try again... (tryings = 3, bot id = 8558216907)
+2026-02-23 11:07:03,871 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramConflictError: Telegram server says - Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-02-23 11:07:03,871 - aiogram.dispatcher - WARNING - Sleep for 2.755361 seconds and try again... (tryings = 4, bot id = 8558216907)
+2026-02-23 11:07:13,816 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramConflictError: Telegram server says - Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-02-23 11:07:13,816 - aiogram.dispatcher - WARNING - Sleep for 3.597904 seconds and try again... (tryings = 5, bot id = 8558216907)
+2026-02-23 11:07:27,594 - aiogram.dispatcher - INFO - Connection established (tryings = 6, bot id = 8558216907)
+2026-02-23 11:10:29,971 - aiogram.event - INFO - Update id=947468470 is handled. Duration 366 ms by bot id=8558216907
+2026-02-23 11:10:32,088 - aiogram.event - INFO - Update id=947468471 is handled. Duration 177 ms by bot id=8558216907
+2026-02-23 11:10:33,216 - aiogram.event - INFO - Update id=947468472 is handled. Duration 175 ms by bot id=8558216907
+2026-02-23 11:10:34,091 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads?source=scanner "HTTP/1.1 200 OK"
+2026-02-23 11:10:34,231 - aiogram.event - INFO - Update id=947468473 is handled. Duration 271 ms by bot id=8558216907
+2026-02-23 11:10:35,244 - aiogram.event - INFO - Update id=947468474 is handled. Duration 157 ms by bot id=8558216907
+2026-02-23 11:10:36,267 - aiogram.event - INFO - Update id=947468475 is handled. Duration 113 ms by bot id=8558216907
+2026-02-23 11:10:37,267 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 11:10:37,444 - aiogram.event - INFO - Update id=947468476 is handled. Duration 206 ms by bot id=8558216907
+2026-02-23 11:10:39,687 - aiogram.event - INFO - Update id=947468477 is handled. Duration 96 ms by bot id=8558216907
+2026-02-23 11:10:44,693 - faster_whisper - INFO - Processing audio with duration 00:01.854
+2026-02-23 11:10:44,713 - faster_whisper - INFO - VAD filter removed 00:00.000 of audio
+2026-02-23 11:10:45,242 - faster_whisper - INFO - Detected language 'ru' with probability 0.96
+2026-02-23 11:10:45,744 - app.ai.unified_ai_service - INFO - Used local faster-whisper transcription
+2026-02-23 11:10:45,927 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 11:10:45,996 - aiogram.event - INFO - Update id=947468478 is handled. Duration 1895 ms by bot id=8558216907
+2026-02-23 11:11:36,477 - aiogram.event - INFO - Update id=947468479 is handled. Duration 269 ms by bot id=8558216907
+2026-02-23 11:11:41,181 - aiogram.event - INFO - Update id=947468480 is handled. Duration 456 ms by bot id=8558216907
