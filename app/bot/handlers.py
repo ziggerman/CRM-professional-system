@@ -1845,7 +1845,6 @@ async def handle_note_delete(callback: CallbackQuery, state: FSMContext):
 
 
 # ─────────────────────────────────────────────────────────────
-<<<<<<< HEAD
 # AI Interactive Buttons (lead draft + analysis navigation)
 # ─────────────────────────────────────────────────────────────
 
@@ -1952,8 +1951,6 @@ async def ai_analysis_next_question(callback: CallbackQuery):
 
 
 # ─────────────────────────────────────────────────────────────
-=======
->>>>>>> 4d0f3672a597e6fa6b319c6a778a3994be21a2f9
 # Search FSM
 # ─────────────────────────────────────────────────────────────
 

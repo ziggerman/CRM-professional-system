@@ -83,7 +83,6 @@ def get_paste_confirm_keyboard() -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-<<<<<<< HEAD
 def get_ai_lead_draft_keyboard() -> InlineKeyboardMarkup:
     """AI draft lead actions: save/edit/rephrase."""
     builder = InlineKeyboardBuilder()
@@ -108,8 +107,6 @@ def get_ai_analysis_next_steps_keyboard(lead_id: int) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-=======
->>>>>>> 4d0f3672a597e6fa6b319c6a778a3994be21a2f9
 # ─────────────────────────────────────────────────────────────
 # Leads Categories
 # ─────────────────────────────────────────────────────────────

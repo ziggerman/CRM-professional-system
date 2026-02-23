@@ -298,7 +298,6 @@ class UnifiedAIService:
             "lead_data": lead_data,
             "confidence": action.confidence,
             "raw_text": text,
-<<<<<<< HEAD
             "ui_hint": ui_hint,
             "missing_fields": missing_fields,
         }
@@ -375,8 +374,6 @@ class UnifiedAIService:
             "kind": "none",
             "show_buttons": False,
             "reason": "fallback",
-=======
->>>>>>> 4d0f3672a597e6fa6b319c6a778a3994be21a2f9
         }
     
     def _extract_lead_id(self, text: str) -> int | None:

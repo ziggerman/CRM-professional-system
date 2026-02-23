@@ -70,10 +70,6 @@ async def main():
     from aiogram.types import BotCommand
     commands = [
         BotCommand(command="start", description="Restart the bot"),
-<<<<<<< HEAD
-=======
-        BotCommand(command="menu", description="Open Main Menu"),
->>>>>>> 4d0f3672a597e6fa6b319c6a778a3994be21a2f9
         BotCommand(command="settings", description="Manage Settings"),
         BotCommand(command="help", description="Show Help Information"),
     ]
