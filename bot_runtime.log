@@ -643,3 +643,122 @@
 2026-02-23 10:29:25,403 - aiogram.event - INFO - Update id=947468363 is handled. Duration 166 ms by bot id=8558216907
 2026-02-23 10:29:29,939 - aiogram.event - INFO - Update id=947468364 is handled. Duration 201 ms by bot id=8558216907
 2026-02-23 10:29:31,151 - aiogram.event - INFO - Update id=947468365 is handled. Duration 138 ms by bot id=8558216907
+2026-02-23 10:34:27,979 - aiogram.event - INFO - Update id=947468366 is handled. Duration 254 ms by bot id=8558216907
+2026-02-23 10:34:28,578 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:34:28,674 - aiogram.event - INFO - Update id=947468367 is handled. Duration 132 ms by bot id=8558216907
+2026-02-23 10:34:30,229 - aiogram.event - INFO - Update id=947468368 is handled. Duration 79 ms by bot id=8558216907
+2026-02-23 10:34:31,185 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:34:31,305 - aiogram.event - INFO - Update id=947468369 is handled. Duration 203 ms by bot id=8558216907
+2026-02-23 10:34:32,564 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads/16 "HTTP/1.1 200 OK"
+2026-02-23 10:34:32,804 - aiogram.event - INFO - Update id=947468370 is handled. Duration 371 ms by bot id=8558216907
+2026-02-23 10:34:37,062 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads/16 "HTTP/1.1 200 OK"
+2026-02-23 10:34:37,279 - aiogram.event - INFO - Update id=947468371 is handled. Duration 235 ms by bot id=8558216907
+2026-02-23 10:34:38,246 - httpx - INFO - HTTP Request: PATCH http://localhost:8000/api/v1/leads/16/stage "HTTP/1.1 400 Bad Request"
+2026-02-23 10:34:38,411 - aiogram.event - INFO - Update id=947468372 is handled. Duration 241 ms by bot id=8558216907
+2026-02-23 10:34:39,659 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads/16 "HTTP/1.1 200 OK"
+2026-02-23 10:34:39,894 - aiogram.event - INFO - Update id=947468373 is handled. Duration 341 ms by bot id=8558216907
+2026-02-23 10:35:21,033 - aiogram.event - INFO - Update id=947468374 is handled. Duration 472 ms by bot id=8558216907
+2026-02-23 10:35:24,637 - aiogram.event - INFO - Update id=947468375 is handled. Duration 83 ms by bot id=8558216907
+2026-02-23 10:35:26,029 - aiogram.event - INFO - Update id=947468376 is handled. Duration 76 ms by bot id=8558216907
+2026-02-23 10:35:27,396 - aiogram.event - INFO - Update id=947468377 is handled. Duration 76 ms by bot id=8558216907
+2026-02-23 10:35:28,830 - aiogram.event - INFO - Update id=947468378 is handled. Duration 73 ms by bot id=8558216907
+2026-02-23 10:35:34,008 - faster_whisper - INFO - Processing audio with duration 00:01.854
+2026-02-23 10:35:34,031 - faster_whisper - INFO - VAD filter removed 00:00.368 of audio
+2026-02-23 10:35:34,653 - faster_whisper - INFO - Detected language 'ru' with probability 0.97
+2026-02-23 10:35:35,115 - app.ai.unified_ai_service - INFO - Used local faster-whisper transcription
+2026-02-23 10:35:35,302 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:35:35,390 - aiogram.event - INFO - Update id=947468379 is handled. Duration 2233 ms by bot id=8558216907
+2026-02-23 10:35:42,546 - faster_whisper - INFO - Processing audio with duration 00:02.054
+2026-02-23 10:35:42,552 - faster_whisper - INFO - VAD filter removed 00:00.000 of audio
+2026-02-23 10:35:43,027 - faster_whisper - INFO - Detected language 'ru' with probability 0.95
+2026-02-23 10:35:43,499 - app.ai.unified_ai_service - INFO - Used local faster-whisper transcription
+2026-02-23 10:35:43,669 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:35:43,744 - aiogram.event - INFO - Update id=947468380 is handled. Duration 1531 ms by bot id=8558216907
+2026-02-23 10:35:47,496 - aiogram.event - INFO - Update id=947468381 is handled. Duration 92 ms by bot id=8558216907
+2026-02-23 10:35:48,227 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:35:48,301 - aiogram.event - INFO - Update id=947468382 is handled. Duration 90 ms by bot id=8558216907
+2026-02-23 10:35:49,202 - aiogram.event - INFO - Update id=947468383 is handled. Duration 72 ms by bot id=8558216907
+2026-02-23 10:39:57,120 - aiogram.event - INFO - Update id=947468384 is handled. Duration 201 ms by bot id=8558216907
+2026-02-23 10:39:58,470 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:39:58,583 - aiogram.event - INFO - Update id=947468385 is handled. Duration 222 ms by bot id=8558216907
+2026-02-23 10:39:59,509 - aiogram.event - INFO - Update id=947468386 is handled. Duration 116 ms by bot id=8558216907
+2026-02-23 10:40:00,384 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/sales "HTTP/1.1 500 Internal Server Error"
+2026-02-23 10:40:00,549 - aiogram.event - INFO - Update id=947468387 is handled. Duration 222 ms by bot id=8558216907
+2026-02-23 10:40:01,276 - aiogram.event - INFO - Update id=947468388 is handled. Duration 144 ms by bot id=8558216907
+2026-02-23 10:40:01,976 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/sales "HTTP/1.1 500 Internal Server Error"
+2026-02-23 10:40:02,128 - aiogram.event - INFO - Update id=947468389 is handled. Duration 177 ms by bot id=8558216907
+2026-02-23 10:40:03,197 - aiogram.event - INFO - Update id=947468390 is handled. Duration 379 ms by bot id=8558216907
+2026-02-23 10:40:03,908 - aiogram.event - INFO - Update id=947468391 is handled. Duration 114 ms by bot id=8558216907
+2026-02-23 10:40:09,497 - aiogram.event - INFO - Update id=947468392 is handled. Duration 69 ms by bot id=8558216907
+2026-02-23 10:40:10,431 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:40:10,550 - aiogram.event - INFO - Update id=947468393 is handled. Duration 208 ms by bot id=8558216907
+2026-02-23 10:40:21,123 - aiogram.event - INFO - Update id=947468394 is handled. Duration 123 ms by bot id=8558216907
+2026-02-23 10:40:22,206 - aiogram.event - INFO - Update id=947468395 is handled. Duration 184 ms by bot id=8558216907
+2026-02-23 10:40:23,358 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:40:23,507 - aiogram.event - INFO - Update id=947468396 is handled. Duration 253 ms by bot id=8558216907
+2026-02-23 10:40:24,500 - aiogram.event - INFO - Update id=947468397 is handled. Duration 122 ms by bot id=8558216907
+2026-02-23 10:40:25,307 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:40:25,493 - aiogram.event - INFO - Update id=947468398 is handled. Duration 294 ms by bot id=8558216907
+2026-02-23 10:40:27,617 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads/12 "HTTP/1.1 200 OK"
+2026-02-23 10:40:27,739 - aiogram.event - INFO - Update id=947468399 is handled. Duration 187 ms by bot id=8558216907
+2026-02-23 10:40:32,999 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads/12 "HTTP/1.1 200 OK"
+2026-02-23 10:40:33,054 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads/12 "HTTP/1.1 200 OK"
+2026-02-23 10:40:33,158 - aiogram.event - INFO - Update id=947468400 is handled. Duration 175 ms by bot id=8558216907
+2026-02-23 10:40:33,206 - app.bot.handlers - WARNING - safe_edit failed: Telegram server says - Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+2026-02-23 10:40:33,257 - aiogram.event - INFO - Update id=947468401 is handled. Duration 217 ms by bot id=8558216907
+2026-02-23 10:40:34,030 - httpx - INFO - HTTP Request: PATCH http://localhost:8000/api/v1/leads/12 "HTTP/1.1 200 OK"
+2026-02-23 10:40:34,092 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads/12 "HTTP/1.1 200 OK"
+2026-02-23 10:40:34,209 - aiogram.event - INFO - Update id=947468402 is handled. Duration 204 ms by bot id=8558216907
+2026-02-23 10:40:37,288 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads/12 "HTTP/1.1 200 OK"
+2026-02-23 10:40:37,466 - aiogram.event - INFO - Update id=947468403 is handled. Duration 194 ms by bot id=8558216907
+2026-02-23 10:40:38,972 - aiogram.event - INFO - Update id=947468404 is handled. Duration 155 ms by bot id=8558216907
+2026-02-23 10:40:40,370 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:40:40,444 - aiogram.event - INFO - Update id=947468405 is handled. Duration 88 ms by bot id=8558216907
+2026-02-23 10:41:37,871 - aiogram.event - INFO - Update id=947468406 is handled. Duration 170 ms by bot id=8558216907
+2026-02-23 10:41:39,345 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:41:39,526 - aiogram.event - INFO - Update id=947468407 is handled. Duration 294 ms by bot id=8558216907
+2026-02-23 10:41:46,748 - aiogram.event - INFO - Update id=947468408 is handled. Duration 144 ms by bot id=8558216907
+2026-02-23 10:41:47,702 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:41:47,824 - aiogram.event - INFO - Update id=947468409 is handled. Duration 196 ms by bot id=8558216907
+2026-02-23 10:41:51,882 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads/17 "HTTP/1.1 200 OK"
+2026-02-23 10:41:52,123 - aiogram.event - INFO - Update id=947468410 is handled. Duration 398 ms by bot id=8558216907
+2026-02-23 10:42:04,636 - aiogram.event - INFO - Update id=947468411 is handled. Duration 312 ms by bot id=8558216907
+2026-02-23 10:42:05,648 - aiogram.event - INFO - Update id=947468412 is handled. Duration 103 ms by bot id=8558216907
+2026-02-23 10:42:07,811 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:42:08,001 - aiogram.event - INFO - Update id=947468413 is handled. Duration 298 ms by bot id=8558216907
+2026-02-23 10:42:09,215 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads/17 "HTTP/1.1 200 OK"
+2026-02-23 10:42:09,347 - aiogram.event - INFO - Update id=947468414 is handled. Duration 211 ms by bot id=8558216907
+2026-02-23 10:42:13,922 - httpx - INFO - HTTP Request: POST http://localhost:8000/api/v1/leads/17/analyze "HTTP/1.1 200 OK"
+2026-02-23 10:42:14,073 - aiogram.event - INFO - Update id=947468415 is handled. Duration 277 ms by bot id=8558216907
+2026-02-23 10:42:16,382 - httpx - INFO - HTTP Request: POST http://localhost:8000/api/v1/leads/17/analyze "HTTP/1.1 200 OK"
+2026-02-23 10:42:16,453 - app.bot.handlers - WARNING - safe_edit failed: Telegram server says - Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+2026-02-23 10:42:16,532 - aiogram.event - INFO - Update id=947468416 is handled. Duration 233 ms by bot id=8558216907
+2026-02-23 10:42:18,298 - aiogram.event - INFO - Update id=947468417 is handled. Duration 156 ms by bot id=8558216907
+2026-02-23 10:42:22,838 - faster_whisper - INFO - Processing audio with duration 00:01.394
+2026-02-23 10:42:22,863 - faster_whisper - INFO - VAD filter removed 00:00.000 of audio
+2026-02-23 10:42:23,458 - faster_whisper - INFO - Detected language 'ru' with probability 0.83
+2026-02-23 10:42:23,928 - app.ai.unified_ai_service - INFO - Used local faster-whisper transcription
+2026-02-23 10:42:24,128 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:42:24,220 - aiogram.event - INFO - Update id=947468418 is handled. Duration 2089 ms by bot id=8558216907
+2026-02-23 10:42:39,976 - faster_whisper - INFO - Processing audio with duration 00:02.754
+2026-02-23 10:42:39,985 - faster_whisper - INFO - VAD filter removed 00:00.112 of audio
+2026-02-23 10:42:40,429 - faster_whisper - INFO - Detected language 'ru' with probability 0.96
+2026-02-23 10:42:40,909 - app.ai.unified_ai_service - INFO - Used local faster-whisper transcription
+2026-02-23 10:42:41,106 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:42:41,186 - aiogram.event - INFO - Update id=947468419 is handled. Duration 1660 ms by bot id=8558216907
+2026-02-23 10:44:13,220 - aiogram.event - INFO - Update id=947468420 is handled. Duration 304 ms by bot id=8558216907
+2026-02-23 10:44:14,342 - aiogram.event - INFO - Update id=947468421 is handled. Duration 72 ms by bot id=8558216907
+2026-02-23 10:44:19,389 - aiogram.event - INFO - Update id=947468422 is handled. Duration 126 ms by bot id=8558216907
+2026-02-23 10:44:21,472 - aiogram.event - INFO - Update id=947468423 is handled. Duration 77 ms by bot id=8558216907
+2026-02-23 10:45:23,574 - aiogram.event - INFO - Update id=947468424 is handled. Duration 310 ms by bot id=8558216907
+2026-02-23 10:55:53,429 - aiogram.event - INFO - Update id=947468425 is handled. Duration 353 ms by bot id=8558216907
+2026-02-23 10:55:55,712 - aiogram.event - INFO - Update id=947468426 is handled. Duration 82 ms by bot id=8558216907
+2026-02-23 10:55:59,441 - faster_whisper - INFO - Processing audio with duration 00:00.934
+2026-02-23 10:55:59,467 - faster_whisper - INFO - VAD filter removed 00:00.000 of audio
+2026-02-23 10:56:00,146 - faster_whisper - INFO - Detected language 'es' with probability 0.49
+2026-02-23 10:56:00,651 - app.ai.unified_ai_service - INFO - Used local faster-whisper transcription
+2026-02-23 10:56:00,908 - httpx - INFO - HTTP Request: GET http://localhost:8000/api/v1/leads "HTTP/1.1 200 OK"
+2026-02-23 10:56:01,039 - aiogram.event - INFO - Update id=947468427 is handled. Duration 2595 ms by bot id=8558216907
+2026-02-23 10:57:28,415 - aiogram.event - INFO - Update id=947468428 is handled. Duration 163 ms by bot id=8558216907
+2026-02-23 10:57:29,174 - aiogram.event - INFO - Update id=947468429 is handled. Duration 75 ms by bot id=8558216907
+2026-02-23 10:57:30,001 - aiogram.event - INFO - Update id=947468430 is handled. Duration 75 ms by bot id=8558216907

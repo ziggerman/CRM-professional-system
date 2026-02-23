@@ -9,25 +9,16 @@ from app.bot.ui import STAGE_META, SOURCE_META, DOMAIN_META
 
 
 # ─────────────────────────────────────────────────────────────
-# Reply Keyboard (bottom persistent menu)
+# Reply Keyboard (DISABLED - removed main menu per user request)
 # ─────────────────────────────────────────────────────────────
 
-def get_main_menu_keyboard() -> ReplyKeyboardMarkup:
-    """Persistent bottom keyboard for quick navigation."""
-    builder = ReplyKeyboardBuilder()
-    builder.add(KeyboardButton(text="📋 Leads"))
-    builder.add(KeyboardButton(text="💰 Sales"))
-    builder.add(KeyboardButton(text="➕ New Lead"))
-    builder.add(KeyboardButton(text="📊 Stats"))
-    builder.add(KeyboardButton(text="🎤 Voice"))
-    builder.add(KeyboardButton(text="🤖 AI Assist"))
-    builder.add(KeyboardButton(text="⚙️ Settings"))
-    builder.adjust(2, 2, 3)
-    return builder.as_markup(resize_keyboard=True, is_persistent=True)
+def get_main_menu_keyboard() -> None:
+    """Main menu keyboard disabled."""
+    return None
 
 
 # ─────────────────────────────────────────────────────────────
-# Start / Main Menu (Inline)
+# Start / Main Menu (Inline - DISABLED)
 # ─────────────────────────────────────────────────────────────
 
 def get_start_keyboard() -> InlineKeyboardMarkup:

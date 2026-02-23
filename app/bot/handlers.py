@@ -467,14 +467,10 @@ async def cmd_start(message: Message, state: FSMContext):
     user = message.from_user
     is_admin = user.id in bot_settings.TELEGRAM_ADMIN_IDS
 
+    # Main menu keyboard disabled per user request - use inline menu only
     await message.answer(
         ui.format_welcome(user.first_name, is_admin),
-        reply_markup=get_main_menu_keyboard(),
-        parse_mode="HTML"
-    )
-    await message.answer(
-        "📋 <b>Choose where to start:</b>\n\n"
-        "Use the menu buttons below for quick navigation.",
+        reply_markup=get_menu_keyboard(),
         parse_mode="HTML"
     )
 

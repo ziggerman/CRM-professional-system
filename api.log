@@ -1604,3 +1604,335 @@ INFO:     127.0.0.1:64688 - "GET /api/v1/leads/15 HTTP/1.1" 200 OK
 2026-02-23 10:29:20,986 [INFO] app.core.middleware: Request started: GET /api/v1/leads/15/notes
 2026-02-23 10:29:20,995 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/15/notes - 200
 INFO:     127.0.0.1:64693 - "GET /api/v1/leads/15/notes HTTP/1.1" 200 OK
+2026-02-23 10:34:28,561 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-23 10:34:28,577 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:64823 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-23 10:34:31,180 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-23 10:34:31,185 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:64826 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-23 10:34:32,561 [INFO] app.core.middleware: Request started: GET /api/v1/leads/16
+2026-02-23 10:34:32,564 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/16 - 200
+INFO:     127.0.0.1:64828 - "GET /api/v1/leads/16 HTTP/1.1" 200 OK
+2026-02-23 10:34:37,056 [INFO] app.core.middleware: Request started: GET /api/v1/leads/16
+2026-02-23 10:34:37,062 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/16 - 200
+INFO:     127.0.0.1:64836 - "GET /api/v1/leads/16 HTTP/1.1" 200 OK
+2026-02-23 10:34:38,241 [INFO] app.core.middleware: Request started: PATCH /api/v1/leads/16/stage
+2026-02-23 10:34:38,246 [INFO] app.core.middleware: Request completed: PATCH /api/v1/leads/16/stage - 400
+INFO:     127.0.0.1:64838 - "PATCH /api/v1/leads/16/stage HTTP/1.1" 400 Bad Request
+2026-02-23 10:34:39,656 [INFO] app.core.middleware: Request started: GET /api/v1/leads/16
+2026-02-23 10:34:39,659 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/16 - 200
+INFO:     127.0.0.1:64840 - "GET /api/v1/leads/16 HTTP/1.1" 200 OK
+2026-02-23 10:35:35,280 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-23 10:35:35,301 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:64854 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-23 10:35:43,656 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-23 10:35:43,669 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:64857 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-23 10:35:48,221 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-23 10:35:48,226 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:64864 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-23 10:39:58,415 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-23 10:39:58,466 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:65065 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-23 10:40:00,365 [INFO] app.core.middleware: Request started: GET /api/v1/sales
+2026-02-23 10:40:00,376 [ERROR] app.core.middleware: Unhandled error: GET /api/v1/sales
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/sql/sqltypes.py", line 1647, in _object_value_for_elem
+    return self._object_lookup[elem]
+           ~~~~~~~~~~~~~~~~~~~^^^^^^
+KeyError: 'WEB'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/nikolas/Documents/ТЗ : Ascend Edge Ltd/TZ---AEL/app/core/middleware.py", line 77, in dispatch
+    )
+     
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/fastapi/routing.py", line 115, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/contextlib.py", line 222, in __aexit__
+    await self.gen.athrow(typ, value, traceback)
+  File "/Users/nikolas/Documents/ТЗ : Ascend Edge Ltd/TZ---AEL/app/core/database.py", line 55, in get_db
+    yield session
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/fastapi/routing.py", line 101, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/fastapi/routing.py", line 355, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/fastapi/routing.py", line 243, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nikolas/Documents/ТЗ : Ascend Edge Ltd/TZ---AEL/app/api/v1/sales.py", line 47, in list_sales
+    # CRUD
+          
+  File "/Users/nikolas/Documents/ТЗ : Ascend Edge Ltd/TZ---AEL/app/repositories/sale_repo.py", line 71, in get_all
+    result = await self.db.execute(query)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py", line 455, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 202, in greenlet_spawn
+    result = context.switch(value)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2308, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2190, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 296, in orm_execute_statement
+    return cls.orm_setup_cursor_result(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 589, in orm_setup_cursor_result
+    return loading.instances(result, querycontext)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/loading.py", line 259, in instances
+    _prebuffered = list(chunks(None))
+                   ^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/loading.py", line 244, in chunks
+    post_load.invoke(context, path)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/loading.py", line 1541, in invoke
+    loader(
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/strategies.py", line 3197, in _load_for_path
+    self._load_via_child(
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/strategies.py", line 3228, in _load_via_child
+    for k, v in context.session.execute(
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2308, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2190, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 296, in orm_execute_statement
+    return cls.orm_setup_cursor_result(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 589, in orm_setup_cursor_result
+    return loading.instances(result, querycontext)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/loading.py", line 259, in instances
+    _prebuffered = list(chunks(None))
+                   ^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/loading.py", line 217, in chunks
+    fetch = cursor._raw_all_rows()
+            ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/engine/result.py", line 544, in _raw_all_rows
+    return [make_row(row) for row in rows]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/engine/result.py", line 544, in <listcomp>
+    return [make_row(row) for row in rows]
+            ^^^^^^^^^^^^^
+  File "lib/sqlalchemy/cyextension/resultproxy.pyx", line 22, in sqlalchemy.cyextension.resultproxy.BaseRow.__init__
+  File "lib/sqlalchemy/cyextension/resultproxy.pyx", line 79, in sqlalchemy.cyextension.resultproxy._apply_processors
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/sql/sqltypes.py", line 1767, in process
+    value = self._object_value_for_elem(value)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/sql/sqltypes.py", line 1649, in _object_value_for_elem
+    raise LookupError(
+LookupError: 'WEB' is not among the defined enum values. Enum name: leadsource. Possible values: SCANNER, PARTNER, MANUAL
+2026-02-23 10:40:00,383 [INFO] app.core.middleware: Request completed: GET /api/v1/sales - 500
+INFO:     127.0.0.1:65075 - "GET /api/v1/sales HTTP/1.1" 500 Internal Server Error
+2026-02-23 10:40:01,961 [INFO] app.core.middleware: Request started: GET /api/v1/sales
+2026-02-23 10:40:01,973 [ERROR] app.core.middleware: Unhandled error: GET /api/v1/sales
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/sql/sqltypes.py", line 1647, in _object_value_for_elem
+    return self._object_lookup[elem]
+           ~~~~~~~~~~~~~~~~~~~^^^^^^
+KeyError: 'WEB'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/nikolas/Documents/ТЗ : Ascend Edge Ltd/TZ---AEL/app/core/middleware.py", line 77, in dispatch
+    )
+     
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/fastapi/routing.py", line 115, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/contextlib.py", line 222, in __aexit__
+    await self.gen.athrow(typ, value, traceback)
+  File "/Users/nikolas/Documents/ТЗ : Ascend Edge Ltd/TZ---AEL/app/core/database.py", line 55, in get_db
+    yield session
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/fastapi/routing.py", line 101, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/fastapi/routing.py", line 355, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/fastapi/routing.py", line 243, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nikolas/Documents/ТЗ : Ascend Edge Ltd/TZ---AEL/app/api/v1/sales.py", line 47, in list_sales
+    # CRUD
+          
+  File "/Users/nikolas/Documents/ТЗ : Ascend Edge Ltd/TZ---AEL/app/repositories/sale_repo.py", line 71, in get_all
+    result = await self.db.execute(query)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py", line 455, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 202, in greenlet_spawn
+    result = context.switch(value)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2308, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2190, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 296, in orm_execute_statement
+    return cls.orm_setup_cursor_result(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 589, in orm_setup_cursor_result
+    return loading.instances(result, querycontext)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/loading.py", line 259, in instances
+    _prebuffered = list(chunks(None))
+                   ^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/loading.py", line 244, in chunks
+    post_load.invoke(context, path)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/loading.py", line 1541, in invoke
+    loader(
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/strategies.py", line 3197, in _load_for_path
+    self._load_via_child(
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/strategies.py", line 3228, in _load_via_child
+    for k, v in context.session.execute(
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2308, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2190, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 296, in orm_execute_statement
+    return cls.orm_setup_cursor_result(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 589, in orm_setup_cursor_result
+    return loading.instances(result, querycontext)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/loading.py", line 259, in instances
+    _prebuffered = list(chunks(None))
+                   ^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/orm/loading.py", line 217, in chunks
+    fetch = cursor._raw_all_rows()
+            ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/engine/result.py", line 544, in _raw_all_rows
+    return [make_row(row) for row in rows]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/engine/result.py", line 544, in <listcomp>
+    return [make_row(row) for row in rows]
+            ^^^^^^^^^^^^^
+  File "lib/sqlalchemy/cyextension/resultproxy.pyx", line 22, in sqlalchemy.cyextension.resultproxy.BaseRow.__init__
+  File "lib/sqlalchemy/cyextension/resultproxy.pyx", line 79, in sqlalchemy.cyextension.resultproxy._apply_processors
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/sql/sqltypes.py", line 1767, in process
+    value = self._object_value_for_elem(value)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/sqlalchemy/sql/sqltypes.py", line 1649, in _object_value_for_elem
+    raise LookupError(
+LookupError: 'WEB' is not among the defined enum values. Enum name: leadsource. Possible values: SCANNER, PARTNER, MANUAL
+2026-02-23 10:40:01,975 [INFO] app.core.middleware: Request completed: GET /api/v1/sales - 500
+INFO:     127.0.0.1:65077 - "GET /api/v1/sales HTTP/1.1" 500 Internal Server Error
+2026-02-23 10:40:10,413 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-23 10:40:10,431 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:65087 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-23 10:40:23,349 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-23 10:40:23,357 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:65091 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-23 10:40:25,299 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-23 10:40:25,306 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:65093 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-23 10:40:27,612 [INFO] app.core.middleware: Request started: GET /api/v1/leads/12
+2026-02-23 10:40:27,616 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/12 - 200
+INFO:     127.0.0.1:65095 - "GET /api/v1/leads/12 HTTP/1.1" 200 OK
+2026-02-23 10:40:32,994 [INFO] app.core.middleware: Request started: GET /api/v1/leads/12
+2026-02-23 10:40:32,999 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/12 - 200
+INFO:     127.0.0.1:65097 - "GET /api/v1/leads/12 HTTP/1.1" 200 OK
+2026-02-23 10:40:33,051 [INFO] app.core.middleware: Request started: GET /api/v1/leads/12
+2026-02-23 10:40:33,053 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/12 - 200
+INFO:     127.0.0.1:65099 - "GET /api/v1/leads/12 HTTP/1.1" 200 OK
+2026-02-23 10:40:34,015 [INFO] app.core.middleware: Request started: PATCH /api/v1/leads/12
+2026-02-23 10:40:34,029 [INFO] app.core.middleware: Request completed: PATCH /api/v1/leads/12 - 200
+INFO:     127.0.0.1:65102 - "PATCH /api/v1/leads/12 HTTP/1.1" 200 OK
+2026-02-23 10:40:34,089 [INFO] app.core.middleware: Request started: GET /api/v1/leads/12
+2026-02-23 10:40:34,092 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/12 - 200
+INFO:     127.0.0.1:65104 - "GET /api/v1/leads/12 HTTP/1.1" 200 OK
+2026-02-23 10:40:37,284 [INFO] app.core.middleware: Request started: GET /api/v1/leads/12
+2026-02-23 10:40:37,288 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/12 - 200
+INFO:     127.0.0.1:65106 - "GET /api/v1/leads/12 HTTP/1.1" 200 OK
+2026-02-23 10:40:40,364 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-23 10:40:40,370 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:65108 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-23 10:41:39,334 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-23 10:41:39,344 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:65136 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-23 10:41:47,695 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-23 10:41:47,701 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:65138 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-23 10:41:51,878 [INFO] app.core.middleware: Request started: GET /api/v1/leads/17
+2026-02-23 10:41:51,881 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/17 - 200
+INFO:     127.0.0.1:65140 - "GET /api/v1/leads/17 HTTP/1.1" 200 OK
+2026-02-23 10:42:07,798 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-23 10:42:07,810 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:65144 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-23 10:42:09,212 [INFO] app.core.middleware: Request started: GET /api/v1/leads/17
+2026-02-23 10:42:09,215 [INFO] app.core.middleware: Request completed: GET /api/v1/leads/17 - 200
+INFO:     127.0.0.1:65146 - "GET /api/v1/leads/17 HTTP/1.1" 200 OK
+2026-02-23 10:42:13,888 [INFO] app.core.middleware: Request started: POST /api/v1/leads/17/analyze
+2026-02-23 10:42:13,921 [INFO] app.core.middleware: Request completed: POST /api/v1/leads/17/analyze - 200
+INFO:     127.0.0.1:65148 - "POST /api/v1/leads/17/analyze HTTP/1.1" 200 OK
+2026-02-23 10:42:16,373 [INFO] app.core.middleware: Request started: POST /api/v1/leads/17/analyze
+2026-02-23 10:42:16,382 [INFO] app.core.middleware: Request completed: POST /api/v1/leads/17/analyze - 200
+INFO:     127.0.0.1:65150 - "POST /api/v1/leads/17/analyze HTTP/1.1" 200 OK
+2026-02-23 10:42:24,120 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-23 10:42:24,128 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:65154 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-23 10:42:41,096 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-23 10:42:41,106 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:65169 - "GET /api/v1/leads HTTP/1.1" 200 OK
+2026-02-23 10:56:00,854 [INFO] app.core.middleware: Request started: GET /api/v1/leads
+2026-02-23 10:56:00,906 [INFO] app.core.middleware: Request completed: GET /api/v1/leads - 200
+INFO:     127.0.0.1:65462 - "GET /api/v1/leads HTTP/1.1" 200 OK

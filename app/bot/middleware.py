@@ -54,13 +54,12 @@ class FSMTimeoutMiddleware:
                     await state.clear()
                     
                     # Send timeout message (only for messages, not callbacks)
+                    # Main menu is disabled - just clear state without showing menu
                     if isinstance(event, types.Message):
-                        from app.bot.keyboards import get_main_menu_keyboard
                         await event.answer(
                             "⏰ <b>Час очікування вичерпано</b>\n\n"
                             "Вашу сесію було очищено через неактивність. "
-                            "Почніть з меню:",
-                            reply_markup=get_main_menu_keyboard(),
+                            "Напишіть /start щоб почати знову.",
                             parse_mode="HTML"
                         )
                     # For callbacks, we'll just clear state silently
