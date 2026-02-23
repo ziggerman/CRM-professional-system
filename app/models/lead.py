@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from app.models.note import LeadNote
     from app.models.attachment import LeadAttachment
     from app.models.history import LeadHistory
+    from app.models.activity import LeadActivity
 
 
 class LeadSource(str, enum.Enum):
@@ -107,6 +108,9 @@ class Lead(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     telegram_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    full_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    email: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
 
     # Required fields according to ТЗ
     source: Mapped[LeadSource] = mapped_column(SAEnum(LeadSource), nullable=False)
@@ -147,6 +151,12 @@ class Lead(Base):
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     deleted_by: Mapped[str | None] = mapped_column(String(128), nullable=True)
     
+    # SLA and response time tracking (Step 7 - KPI Dashboard)
+    first_response_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    sla_deadline_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    is_overdue: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    days_in_stage: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    
     # Relationships
     assigned_to: Mapped["User | None"] = relationship("User", back_populates="leads", foreign_keys=[assigned_to_id])
     
@@ -179,4 +189,12 @@ class Lead(Base):
         back_populates="lead",
         cascade="all, delete-orphan",
         order_by="LeadHistory.created_at.desc()"
+    )
+    
+    # Relationship to Activities (for KPI tracking)
+    activities: Mapped[list["LeadActivity"]] = relationship(
+        "LeadActivity",
+        back_populates="lead",
+        cascade="all, delete-orphan",
+        order_by="LeadActivity.created_at.desc()"
     )

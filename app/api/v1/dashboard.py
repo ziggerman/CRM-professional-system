@@ -246,3 +246,136 @@ async def get_advanced_dashboard():
     # We call the function logic directly for the API to ensure immediate response
     # or we could run it as a task, but for a bot's immediate view, direct is better.
     return generate_advanced_report_task()
+
+
+# ──────────────────────────────────────────────
+# Step 7: KPI Dashboard Endpoints
+# ──────────────────────────────────────────────
+
+@router.get("/kpi")
+async def get_kpi_dashboard():
+    """Get complete KPI dashboard data (Step 7)."""
+    from app.services.kpi_service import KPIService
+    from app.core.database import AsyncSessionLocal
+    
+    cache_key = "dashboard_kpi_main"
+    r = redis.from_url(settings.REDIS_URL, decode_responses=True)
+    
+    # Try cache
+    try:
+        cached = await r.get(cache_key)
+        if cached:
+            return json.loads(cached)
+    except Exception:
+        pass
+    
+    async with AsyncSessionLocal() as session:
+        kpi_service = KPIService(session)
+        result = await kpi_service.get_complete_kpi_dashboard()
+        
+        # Update cache (5 mins)
+        try:
+            await r.setex(cache_key, 300, json.dumps(result))
+        except Exception:
+            pass
+        finally:
+            await r.close()
+        
+        return result
+
+
+@router.get("/kpi/conversion")
+async def get_kpi_conversion():
+    """Get conversion rates per stage (Step 7)."""
+    from app.services.kpi_service import KPIService
+    from app.core.database import AsyncSessionLocal
+    
+    async with AsyncSessionLocal() as session:
+        kpi_service = KPIService(session)
+        return await kpi_service.get_conversion_per_stage()
+
+
+@router.get("/kpi/response-time")
+async def get_kpi_response_time():
+    """Get median response time metrics (Step 7)."""
+    from app.services.kpi_service import KPIService
+    from app.core.database import AsyncSessionLocal
+    
+    async with AsyncSessionLocal() as session:
+        kpi_service = KPIService(session)
+        return await kpi_service.get_median_response_time()
+
+
+@router.get("/kpi/win-rate")
+async def get_kpi_win_rate():
+    """Get win rates by source, domain, and agent (Step 7)."""
+    from app.services.kpi_service import KPIService
+    from app.core.database import AsyncSessionLocal
+    
+    async with AsyncSessionLocal() as session:
+        kpi_service = KPIService(session)
+        
+        by_source = await kpi_service.get_win_rate_by_source()
+        by_domain = await kpi_service.get_win_rate_by_domain()
+        by_agent = await kpi_service.get_win_rate_by_agent()
+        
+        return {
+            "by_source": by_source,
+            "by_domain": by_domain,
+            "by_agent": by_agent,
+        }
+
+
+@router.get("/kpi/aging")
+async def get_kpi_aging():
+    """Get lead aging and overdue statistics (Step 7)."""
+    from app.services.kpi_service import KPIService
+    from app.core.database import AsyncSessionLocal
+    
+    async with AsyncSessionLocal() as session:
+        kpi_service = KPIService(session)
+        return await kpi_service.get_lead_aging()
+
+
+@router.get("/kpi/trends")
+async def get_kpi_trends(period: str = "week", limit: int = 12):
+    """Get historical trends (Step 7).
+    
+    Args:
+        period: 'week' or 'month'
+        limit: Number of periods to return (default 12)
+    """
+    from app.services.kpi_service import KPIService
+    from app.core.database import AsyncSessionLocal
+    
+    async with AsyncSessionLocal() as session:
+        kpi_service = KPIService(session)
+        
+        if period == "week":
+            return await kpi_service.get_weekly_trends(weeks=limit)
+        else:
+            return await kpi_service.get_monthly_trends(months=limit)
+
+
+@router.get("/kpi/export")
+async def export_kpi_report(format: str = "json"):
+    """Export KPI report for manager review (Step 7).
+    
+    Args:
+        format: 'json' or 'csv' (CSV not yet implemented)
+    
+    Returns:
+        KPI data for external consumption
+    """
+    from app.services.kpi_service import KPIService
+    from app.core.database import AsyncSessionLocal
+    
+    async with AsyncSessionLocal() as session:
+        kpi_service = KPIService(session)
+        result = await kpi_service.get_complete_kpi_dashboard()
+        
+        if format == "csv":
+            # TODO: Implement CSV export
+            return {"error": "CSV export not yet implemented", "data": result}
+        
+        return result

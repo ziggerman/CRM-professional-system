@@ -1,0 +1,180 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Step 9: Lint - Code Quality Checks
+  # ──────────────────────────────────────────────
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install black isort mypy
+      
+      - name: Check Black formatting
+        run: black --check app/ tests/ scripts/
+      
+      - name: Check isort imports
+        run: isort --check-only app/ tests/ scripts/
+      
+      - name: Run mypy type checking
+        run: mypy app/ --ignore-missing-imports --no-error-summary
+      
+      - name: Run flake8 linting
+        run: pip install flake8 && flake8 app/ --max-line-length=120 --ignore=E501,W503
+
+  # ──────────────────────────────────────────────
+  # Step 9: Unit Tests
+  # ──────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov httpx
+      
+      - name: Run unit tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379/0
+          OPENAI_API_KEY: sk-test-key
+        run: |
+          pytest tests/unit/ -v --cov=app --cov-report=xml --cov-report=term-missing
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+
+  # ──────────────────────────────────────────────
+  # Step 9: Integration Tests
+  # ──────────────────────────────────────────────
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx
+      
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379/0
+          OPENAI_API_KEY: sk-test-key
+        run: |
+          pytest tests/integration/ -v
+
+  # ──────────────────────────────────────────────
+  # Step 9: Smoke Tests (Critical Bot Flows)
+  # ──────────────────────────────────────────────
+  smoke-tests:
+    name: Smoke Tests - Critical Flows
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx
+      
+      - name: Run smoke tests
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
+          REDIS_URL: "redis://localhost:6379/0"
+          OPENAI_API_KEY: "sk-test-key"
+        run: |
+          # Test critical flows: lead create, edit, note, save, transfer
+          pytest tests/ -v -k "lead_create or lead_edit or lead_note or lead_save or lead_transfer" --tb=short
+      
+      - name: Report status
+        if: always()
+        run: |
+          echo "Smoke tests completed"
+          echo "This verifies critical bot flows work: lead create/edit/note/save/transfer"
