@@ -1,0 +1,25 @@
+# --- Secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Python cache/build ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# --- Runtime artifacts ---
+*.log
+*.db
+.run_bot.lock
+
+# --- IDE/OS ---
+.DS_Store
+.vscode/
+.idea/
+
+# --- Uploads/local runtime data ---
+uploads/
