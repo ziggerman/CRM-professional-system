@@ -226,4 +226,4 @@ DATABASE_URL=sqlite+aiosqlite:///./crm.db
 
 ---
 
-*Developed for Ascend Edge Ltd — CRM Modernization Initiative.*
+*Developed for stotskyi_ — CRM Modernization Initiative.*
